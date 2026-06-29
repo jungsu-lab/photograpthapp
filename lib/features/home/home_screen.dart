@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/premium_widgets.dart';
-import '../../data/mock/mock_templates.dart';
 import '../../data/models/edit_session.dart';
 import '../../data/models/template.dart';
+import '../../data/repositories/template_repository.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static const repository = TemplateRepository();
+
   @override
   Widget build(BuildContext context) {
-    final templates = mockTemplates.take(3).toList(growable: false);
+    final templates = repository.recommended();
+    final categories = repository.categories.where((item) => item != '전체');
 
     return AppScaffold(
       padding: EdgeInsets.zero,
@@ -24,14 +27,14 @@ class HomeScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Text(
-              '오늘 사진, 찍기 전에 먼저 맞춰볼까요?',
+              '오늘 찍을 사진, 먼저 맞춰볼까요?',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
             child: Text(
-              '촬영 목적에 맞춰 구도와 편집 템플릿을 이어서 추천해요.',
+              '사진 종류를 고르면 화면에서 위치와 여백을 잡아볼 수 있어요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
@@ -52,24 +55,24 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 26),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: EditorialSectionHeader(
-              title: '촬영 코치',
-              subtitle: '목적별 구도 체크',
-              actionLabel: '촬영',
-              onAction: () => Navigator.pushNamed(context, AppRoutes.camera),
+            child: SectionHeader(
+              title: '카테고리',
+              subtitle: '상황에 맞게 빠르게 고르기',
+              actionLabel: '전체',
+              onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
             ),
           ),
           const SizedBox(height: 10),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: _CoachStrip(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _CategoryEntryRail(categories: categories.toList()),
           ),
           const SizedBox(height: 26),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: EditorialSectionHeader(
+            child: SectionHeader(
               title: '추천 템플릿',
-              subtitle: '이 사진에 어울리는 편집 방향',
+              subtitle: '처음 찍어도 덜 헤매는 기준',
               actionLabel: '전체',
               onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
             ),
@@ -79,10 +82,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 26),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
-            child: EditorialSectionHeader(
-              title: '최근 작업',
-              subtitle: '완성한 사진은 이곳에 모여요.',
-            ),
+            child: SectionHeader(title: '최근 사진', subtitle: '작업한 사진을 한곳에 모아요.'),
           ),
           const SizedBox(height: 10),
           const Padding(
@@ -140,18 +140,7 @@ class _HomeTopBar extends StatelessWidget {
           const SizedBox(width: 8),
           Text('FrameFit', style: Theme.of(context).textTheme.titleMedium),
           const Spacer(),
-          Text('STUDIO', style: Theme.of(context).textTheme.labelSmall),
-          const SizedBox(width: 6),
-          IconButton(
-            tooltip: '알림',
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none, size: 20),
-          ),
-          IconButton(
-            tooltip: '설정',
-            onPressed: () {},
-            icon: const Icon(Icons.more_horiz, size: 20),
-          ),
+          const StatusPill(label: '촬영 전 체크', icon: Icons.grid_3x3),
         ],
       ),
     );
@@ -228,7 +217,7 @@ class _LeadGallery extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '얼굴을 살짝 오른쪽으로 옮기면 여백이 더 자연스러워요.',
+                  '얼굴을 조금만 오른쪽으로 옮기면 여백이 편해져요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -254,7 +243,7 @@ class _QuickActions extends StatelessWidget {
         Expanded(
           child: PrimaryButton(
             key: const Key('homePrimaryCta'),
-            label: '사진 찍기',
+            label: '찍기 전에 맞추기',
             icon: Icons.photo_camera_outlined,
             onPressed: onCamera,
           ),
@@ -263,7 +252,7 @@ class _QuickActions extends StatelessWidget {
         Expanded(
           child: SecondaryButton(
             key: const Key('homeSecondaryCta'),
-            label: '사진 편집하기',
+            label: '스타일 고르기',
             icon: Icons.tune,
             onPressed: onTemplates,
           ),
@@ -290,17 +279,21 @@ class _TemplateRail extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final template = templates[index];
-          return SizedBox(
-            width: 176,
-            child: PresetCard(
-              key: Key('homeTemplateCard-${template.id}'),
-              template: template,
-              compact: true,
-              recommended: index == 0,
-              onTap: () => Navigator.pushNamed(
-                context,
-                AppRoutes.preview,
-                arguments: PreviewArgs(template: template),
+          return MotionIn(
+            delay: Duration(milliseconds: 35 * index),
+            offset: const Offset(0.04, 0),
+            child: SizedBox(
+              width: 176,
+              child: PresetCard(
+                key: Key('homeTemplateCard-${template.id}'),
+                template: template,
+                compact: true,
+                recommended: index == 0,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.templateDetail,
+                  arguments: TemplateDetailArgs(template: template),
+                ),
               ),
             ),
           );
@@ -310,13 +303,15 @@ class _TemplateRail extends StatelessWidget {
   }
 }
 
-class _CoachStrip extends StatelessWidget {
-  const _CoachStrip();
+class _CategoryEntryRail extends StatelessWidget {
+  const _CategoryEntryRail({required this.categories});
+
+  final List<String> categories;
 
   @override
   Widget build(BuildContext context) {
-    const modes = ['프로필', '셀카', '음식', '여행', '상품', '감성'];
-    return Container(
+    return DecoratedBox(
+      key: const Key('homeCategoryEntryRail'),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         border: Border(
@@ -324,11 +319,28 @@ class _CoachStrip extends StatelessWidget {
           bottom: BorderSide(color: AppColors.line),
         ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: modes.map((mode) => MetaChip(label: mode)).toList(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: categories.indexed
+              .map(
+                (entry) => MotionIn(
+                  delay: Duration(milliseconds: 24 * entry.$1),
+                  child: CategoryChip(
+                    label: entry.$2,
+                    selected: false,
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.templates,
+                      arguments: TemplateLibraryArgs(initialCategory: entry.$2),
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
       ),
     );
   }

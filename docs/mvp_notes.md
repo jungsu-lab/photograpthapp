@@ -1,4 +1,6 @@
-# FrameFit MVP Notes V3
+# FrameFit MVP Notes
+
+This note describes the current mocked Flutter flow. The Phase 0 source-of-truth docs are `README.md`, `docs/FEATURE_SPEC.md`, `docs/DESIGN_GUIDE.md`, and `docs/TEMPLATE_SCHEMA.md`.
 
 ## Implemented Screens
 
@@ -46,7 +48,7 @@
 ## How To Run
 
 ```bash
-cd /home/jungsu/projects/framefit
+cd /home/jungsu/photograpthapp
 flutter pub get
 flutter run
 ```

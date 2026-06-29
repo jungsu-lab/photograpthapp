@@ -17,18 +17,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   static const pages = [
     (
-      title: '사진 찍기 전에 알려드릴게요',
-      body: '구도, 조명, 거리, 초점을 촬영 전에 먼저 확인해요.',
+      title: '찍기 전에 한 번만 맞춰요',
+      body: '얼굴 위치, 여백, 밝기를 화면에서 가볍게 확인해요.',
       type: _VisualType.camera,
     ),
     (
-      title: '템플릿만 고르면 끝',
-      body: '어려운 프롬프트 없이 원하는 분위기를 고르면 돼요.',
+      title: '원하는 느낌부터 고르세요',
+      body: '프로필, 음식, 여행처럼 상황에 맞는 기준을 먼저 잡아요.',
       type: _VisualType.presets,
     ),
     (
-      title: '적용 전 시안을 먼저 확인',
-      body: '결과를 먼저 보고 마음에 드는 방향만 고화질로 완성해요.',
+      title: '저장 전엔 가볍게 비교',
+      body: '원본과 시안을 보고 마음에 드는 방향만 남겨요.',
       type: _VisualType.preview,
     ),
   ];
@@ -119,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: PrimaryButton(
               key: const Key('onboardingPrimaryCta'),
-              label: page == pages.length - 1 ? '시작하기' : '다음',
+              label: page == pages.length - 1 ? '바로 시작' : '다음',
               onPressed: () {
                 if (page < pages.length - 1) {
                   controller.nextPage(
@@ -260,7 +260,7 @@ class _CameraStory extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               color: Colors.white.withValues(alpha: 0.9),
               child: Text(
-                '얼굴을 살짝 오른쪽으로 옮기면 여백이 더 자연스러워요.',
+                '얼굴을 조금만 오른쪽으로 옮겨볼까요?',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

@@ -11,8 +11,8 @@ class AnalysisScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       appBar: MinimalTopBar(
-        title: '사진 분석 완료',
-        subtitle: '촬영 상태를 확인하고 어울리는 템플릿을 추천했어요.',
+        title: '이 사진은 이렇게 보정해볼게요',
+        subtitle: '구도와 배경을 기준으로 가볍게 골랐어요.',
         leading: IconButton(
           tooltip: '뒤로',
           onPressed: () => Navigator.maybePop(context),
@@ -43,10 +43,13 @@ class AnalysisScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('추천 이유', style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  '왜 이 스타일인가요?',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
                 const SizedBox(height: 6),
                 Text(
-                  '배경이 살짝 복잡해서 배경 흐림 인물 템플릿을 추천해요.',
+                  '배경에 시선이 조금 가서 인물이 더 또렷한 쪽이 잘 맞아요.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -55,7 +58,7 @@ class AnalysisScreen extends StatelessWidget {
           const SizedBox(height: 18),
           PrimaryButton(
             key: const Key('analysisTemplatesCta'),
-            label: '추천 템플릿 보기',
+            label: '어울리는 스타일 보기',
             icon: Icons.auto_awesome_outlined,
             onPressed: () => Navigator.pushNamed(context, AppRoutes.templates),
           ),

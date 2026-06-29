@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/router/app_routes.dart';
 import '../../core/widgets/premium_widgets.dart';
-import '../../data/mock/mock_templates.dart';
 import '../../data/models/edit_session.dart';
+import '../../data/repositories/template_repository.dart';
 
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({super.key});
@@ -14,11 +14,12 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   String selected = '자연스럽게';
+  static const repository = TemplateRepository();
 
   static const options = [
-    (label: '자연스럽게', description: '얼굴 밝기와 피부톤만 부드럽게 정리해요.'),
-    (label: '밝게', description: '어두운 부분을 살리고 SNS용으로 환하게 맞춰요.'),
-    (label: '무드있게', description: '색온도와 대비를 조절해 분위기를 더해요.'),
+    (label: '자연스럽게', description: '얼굴 밝기만 살짝 정리해요.'),
+    (label: '밝게', description: '어두운 부분을 올려 산뜻하게 보여줘요.'),
+    (label: '차분하게', description: '색과 대비를 눌러 분위기를 남겨요.'),
   ];
 
   @override
@@ -26,12 +27,12 @@ class _PreviewScreenState extends State<PreviewScreen> {
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
     final template = switch (routeArgs) {
       PreviewArgs(:final template) => template,
-      _ => mockTemplates.first,
+      _ => repository.all().first,
     };
 
     return AppScaffold(
       appBar: MinimalTopBar(
-        title: '시안 미리보기',
+        title: '저장 전에 비교해보세요',
         subtitle: template.name,
         leading: IconButton(
           tooltip: '뒤로',
@@ -89,7 +90,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          Text('편집 방향', style: Theme.of(context).textTheme.titleLarge),
+          Text('어떤 느낌이 좋나요?', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 10),
           Column(
             key: const Key('previewDirectionList'),
@@ -109,7 +110,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
           const SizedBox(height: 8),
           PrimaryButton(
             key: const Key('previewApplyCta'),
-            label: '고화질로 적용하기',
+            label: '이 느낌으로 보기',
             icon: Icons.check,
             onPressed: () => Navigator.pushNamed(
               context,

@@ -13,7 +13,7 @@ class FrameFitApp extends StatelessWidget {
       title: 'FrameFit',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      routes: AppRoutes.routes,
+      onGenerateRoute: AppRoutes.onGenerateRoute,
       home: const OnboardingScreen(),
     );
   }

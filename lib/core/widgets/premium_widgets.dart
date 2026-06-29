@@ -11,22 +11,23 @@ class AppScaffold extends StatelessWidget {
     this.appBar,
     this.bottomNavigation,
     this.padding = const EdgeInsets.all(AppMetrics.pagePadding),
+    this.safeArea = true,
   });
 
   final Widget child;
   final PreferredSizeWidget? appBar;
   final Widget? bottomNavigation;
   final EdgeInsetsGeometry padding;
+  final bool safeArea;
 
   @override
   Widget build(BuildContext context) {
+    final body = Padding(padding: padding, child: child);
     return Scaffold(
       appBar: appBar,
       bottomNavigationBar: bottomNavigation,
       backgroundColor: AppColors.appBackground,
-      body: SafeArea(
-        child: Padding(padding: padding, child: child),
-      ),
+      body: safeArea ? SafeArea(child: body) : body,
     );
   }
 }
@@ -132,6 +133,16 @@ class EditorialSectionHeader extends StatelessWidget {
   }
 }
 
+class SectionHeader extends EditorialSectionHeader {
+  const SectionHeader({
+    super.key,
+    required super.title,
+    super.subtitle,
+    super.actionLabel,
+    super.onAction,
+  });
+}
+
 class ThinTabRow extends StatelessWidget {
   const ThinTabRow({
     super.key,
@@ -215,7 +226,70 @@ class PhotoGrid extends StatelessWidget {
         childAspectRatio: aspectRatio,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) => PhotoTile(data: items[index]),
+      itemBuilder: (context, index) => MotionIn(
+        delay: Duration(milliseconds: 35 * index),
+        child: PhotoTile(data: items[index]),
+      ),
+    );
+  }
+}
+
+class MotionIn extends StatefulWidget {
+  const MotionIn({
+    super.key,
+    required this.child,
+    this.delay = Duration.zero,
+    this.offset = const Offset(0, 0.035),
+  });
+
+  final Widget child;
+  final Duration delay;
+  final Offset offset;
+
+  @override
+  State<MotionIn> createState() => _MotionInState();
+}
+
+class _MotionInState extends State<MotionIn>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 360),
+    );
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+    _opacity = Tween<double>(begin: 0, end: 1).animate(curved);
+    _slide = Tween<Offset>(
+      begin: widget.offset,
+      end: Offset.zero,
+    ).animate(curved);
+    Future<void>.delayed(widget.delay, () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
     );
   }
 }
@@ -246,44 +320,69 @@ class _PhotoTileBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: data.baseColor,
-        borderRadius: BorderRadius.circular(AppMetrics.thumbnailRadius),
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppMetrics.thumbnailRadius),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    data.baseColor.withValues(alpha: 0.95),
-                    data.accentColor.withValues(alpha: 0.72),
-                  ],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppMetrics.thumbnailRadius),
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: data.baseColor),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(
+                    AppMetrics.thumbnailRadius,
+                  ),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      data.baseColor.withValues(alpha: 0.95),
+                      data.accentColor.withValues(alpha: 0.72),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned(
-            left: 8,
-            bottom: 8,
-            right: 8,
-            child: Text(
-              data.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            Positioned.fill(
+              child: CustomPaint(
+                painter: _PhotoTexturePainter(
+                  baseColor: data.baseColor,
+                  accentColor: data.accentColor,
+                ),
               ),
             ),
-          ),
-        ],
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 10,
+              bottom: 10,
+              right: 10,
+              child: Text(
+                data.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -317,15 +416,11 @@ class PresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppMetrics.panelRadius),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppMetrics.panelRadius),
-          border: Border.all(color: AppColors.line),
-        ),
+      child: PremiumCard(
+        padding: EdgeInsets.zero,
+        borderColor: recommended ? AppColors.lineStrong : AppColors.line,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -338,7 +433,7 @@ class PresetCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        recommended ? '이 사진에 추천' : template.category,
+                        recommended ? '먼저 보기 좋음' : template.category,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: recommended
                               ? AppColors.profileAccent
@@ -364,18 +459,18 @@ class PresetCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (!compact) ...[
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 8),
                     Text(
                       '${template.rating.toStringAsFixed(1)} · '
                       '${formatUsageCount(template.usageCount)}명 사용 · '
-                      '초보자 추천 ${template.beginnerFriendlyScore}%',
+                      '쉬운 편 ${template.beginnerFriendlyScore}%',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 9),
+                    const SizedBox(height: 8),
                     Text(
-                      '추천 이유: ${template.recommendationReason}',
+                      '${template.aspectRatio} · ${template.targetSubjectType}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -400,11 +495,44 @@ class PresetCard extends StatelessWidget {
   }
 }
 
+class PressableScale extends StatefulWidget {
+  const PressableScale({super.key, required this.child, required this.onTap});
+
+  final Widget child;
+  final VoidCallback onTap;
+
+  @override
+  State<PressableScale> createState() => _PressableScaleState();
+}
+
+class _PressableScaleState extends State<PressableScale> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTap: widget.onTap,
+      child: AnimatedScale(
+        scale: _pressed ? 0.985 : 1,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 class TemplateCard extends PresetCard {
   const TemplateCard({
     super.key,
     required super.template,
     required super.onTap,
+    super.recommended,
+    super.compact,
   });
 }
 
@@ -435,7 +563,7 @@ class EditorActionBar extends StatelessWidget {
           children: List.generate(actions.length, (index) {
             final item = actions[index];
             final selected = selectedIndex == index;
-            return InkWell(
+            return PressableScale(
               key: Key('bottomNav-${item.label}'),
               onTap: () => onTap(index),
               child: Padding(
@@ -443,12 +571,17 @@ class EditorActionBar extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      item.icon,
-                      size: 18,
-                      color: selected
-                          ? AppColors.textPrimary
-                          : AppColors.textSecondary,
+                    AnimatedScale(
+                      scale: selected ? 1.08 : 1,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      child: Icon(
+                        item.icon,
+                        size: 18,
+                        color: selected
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -503,8 +636,10 @@ class CameraGuideOverlay extends StatelessWidget {
             ),
           ),
           Center(
-            child: Container(
+            child: AnimatedContainer(
               key: const Key('subjectGuideBox'),
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
               width: mode == '음식' ? 178 : 118,
               height: mode == '음식' ? 112 : 166,
               decoration: BoxDecoration(
@@ -553,11 +688,12 @@ class PreviewOptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppMetrics.panelRadius),
-      child: Container(
+      child: AnimatedContainer(
         key: selected ? Key('selectedPreview-$label') : null,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: selected ? AppColors.surfaceSoft : AppColors.surface,
           borderRadius: BorderRadius.circular(AppMetrics.panelRadius),
@@ -617,21 +753,39 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final content = _ButtonContent(label: label, icon: icon);
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton(onPressed: onPressed, child: content),
+    );
+  }
+}
+
+class GhostButton extends StatelessWidget {
+  const GhostButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
     return SizedBox(
       height: AppMetrics.buttonHeight,
       width: double.infinity,
-      child: FilledButton.icon(
+      child: TextButton(
         onPressed: onPressed,
-        icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 17),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.actionPrimary,
-          foregroundColor: AppColors.actionPrimaryText,
-          textStyle: Theme.of(context).textTheme.labelLarge,
+        style: TextButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
           ),
         ),
+        child: _ButtonContent(label: label, icon: icon),
       ),
     );
   }
@@ -652,22 +806,43 @@ class SecondaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: AppMetrics.buttonHeight,
       width: double.infinity,
-      child: OutlinedButton.icon(
+      child: OutlinedButton(
         onPressed: onPressed,
-        icon: icon == null ? const SizedBox.shrink() : Icon(icon, size: 17),
-        label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.actionSecondaryText,
-          backgroundColor: AppColors.actionSecondary,
-          side: const BorderSide(color: AppColors.lineStrong),
-          textStyle: Theme.of(context).textTheme.labelLarge,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppMetrics.buttonRadius),
-          ),
-        ),
+        child: _ButtonContent(label: label, icon: icon),
       ),
+    );
+  }
+}
+
+class _ButtonContent extends StatelessWidget {
+  const _ButtonContent({required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Flexible(
+      child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
+
+    if (icon == null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [text],
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: 17),
+        const SizedBox(width: AppSpacing.xs),
+        text,
+      ],
     );
   }
 }
@@ -800,6 +975,215 @@ class MetaChip extends StatelessWidget {
   }
 }
 
+class CategoryChip extends StatelessWidget {
+  const CategoryChip({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      key: Key('categoryChip-$label'),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.textPrimary : AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadii.chip),
+          border: Border.all(
+            color: selected ? AppColors.textPrimary : AppColors.lineStrong,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSize(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              child: selected
+                  ? const Padding(
+                      padding: EdgeInsets.only(right: AppSpacing.xs),
+                      child: Icon(
+                        Icons.check,
+                        size: 13,
+                        color: AppColors.actionPrimaryText,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: selected
+                    ? AppColors.actionPrimaryText
+                    : AppColors.textPrimary,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StatusPill extends StatelessWidget {
+  const StatusPill({super.key, required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceSoft,
+        borderRadius: BorderRadius.circular(AppRadii.chip),
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: AppColors.textSecondary),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  const EmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.xxl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 28, color: AppColors.textMuted),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          if (action != null) ...[
+            const SizedBox(height: AppSpacing.xl),
+            action!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoTexturePainter extends CustomPainter {
+  const _PhotoTexturePainter({
+    required this.baseColor,
+    required this.accentColor,
+  });
+
+  final Color baseColor;
+  final Color accentColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final softLight = Paint()
+      ..color = Colors.white.withValues(alpha: 0.16)
+      ..style = PaintingStyle.fill;
+    final shadow = Paint()
+      ..color = Colors.black.withValues(alpha: 0.08)
+      ..style = PaintingStyle.fill;
+    final accent = Paint()
+      ..color = accentColor.withValues(alpha: 0.18)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.24, size.height * 0.22),
+        width: size.width * 0.68,
+        height: size.height * 0.42,
+      ),
+      softLight,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * 0.78, size.height * 0.8),
+        width: size.width * 0.5,
+        height: size.height * 0.32,
+      ),
+      shadow,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          size.width * 0.58,
+          size.height * 0.14,
+          size.width * 0.18,
+          size.height * 0.68,
+        ),
+        const Radius.circular(999),
+      ),
+      accent,
+    );
+
+    final grain = Paint()
+      ..color = baseColor.withValues(alpha: 0.16)
+      ..strokeWidth = 0.7;
+    for (var i = 0; i < 18; i += 1) {
+      final x = (size.width * ((i * 37) % 100)) / 100;
+      final y = (size.height * ((i * 53) % 100)) / 100;
+      canvas.drawCircle(Offset(x, y), 0.8, grain);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PhotoTexturePainter oldDelegate) {
+    return oldDelegate.baseColor != baseColor ||
+        oldDelegate.accentColor != accentColor;
+  }
+}
+
 class _PresetThumbnail extends StatelessWidget {
   const _PresetThumbnail({required this.template, required this.compact});
 
@@ -812,35 +1196,28 @@ class _PresetThumbnail extends StatelessWidget {
       height: compact ? 84 : 128,
       width: double.infinity,
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppMetrics.panelRadius),
+        ),
         child: PhotoTile(
           data: PhotoTileData(
-            label: template.category,
-            baseColor: _baseColor(template.category),
-            accentColor: _accentColor(template.category),
+            label: template.sampleVisual.label,
+            baseColor: _hexColor(template.sampleVisual.baseColorHex),
+            accentColor: _hexColor(template.sampleVisual.accentColorHex),
           ),
         ),
       ),
     );
   }
 
-  Color _baseColor(String category) => switch (category) {
-    '프로필' => const Color(0xFFB8AAA0),
-    '셀카' => const Color(0xFFD3B7A5),
-    '음식' => const Color(0xFFC9824A),
-    '여행' => const Color(0xFF7FA9C8),
-    '상품' => const Color(0xFFE8E5DE),
-    _ => const Color(0xFF9A768C),
-  };
-
-  Color _accentColor(String category) => switch (category) {
-    '프로필' => const Color(0xFF2B2B2B),
-    '셀카' => const Color(0xFF8D6658),
-    '음식' => const Color(0xFF6C3E20),
-    '여행' => const Color(0xFFE0A45B),
-    '상품' => const Color(0xFFB8B8B2),
-    _ => const Color(0xFF352A35),
-  };
+  Color _hexColor(String value) {
+    final normalized = value.replaceFirst('#', '');
+    final parsed = int.tryParse(normalized, radix: 16);
+    if (parsed == null) {
+      return AppColors.surfaceSoft;
+    }
+    return Color(0xFF000000 | parsed);
+  }
 }
 
 class _MiniPreview extends StatelessWidget {
