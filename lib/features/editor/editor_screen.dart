@@ -18,16 +18,29 @@ class EditorArgs {
 }
 
 class EditorScreen extends StatefulWidget {
-  const EditorScreen({super.key});
+  const EditorScreen({
+    super.key,
+    this.args,
+    this.processor = const PhotoProcessor(),
+    this.exporter,
+    this.presetPreferences,
+  });
+
+  /// Supplying arguments directly keeps the screen easy to exercise in widget
+  /// tests, while production navigation continues to use route arguments.
+  final EditorArgs? args;
+  final PhotoProcessor processor;
+  final PhotoExportService? exporter;
+  final PresetPreferences? presetPreferences;
 
   @override
   State<EditorScreen> createState() => _EditorScreenState();
 }
 
 class _EditorScreenState extends State<EditorScreen> {
-  final _processor = const PhotoProcessor();
-  final _exporter = PhotoExportService();
-  final _presetPreferences = PresetPreferences();
+  late final PhotoProcessor _processor;
+  late final PhotoExportService _exporter;
+  late final PresetPreferences _presetPreferences;
   EditSettings _settings = const EditSettings();
   Uint8List? _previewBytes;
   String? _error;
@@ -40,8 +53,10 @@ class _EditorScreenState extends State<EditorScreen> {
   Set<String> _favoriteIds = <String>{};
   bool _appliedArgs = false;
 
-  SelectedPhoto get _photo =>
-      (ModalRoute.of(context)?.settings.arguments as EditorArgs).photo;
+  EditorArgs get _args =>
+      widget.args ?? (ModalRoute.of(context)?.settings.arguments as EditorArgs);
+
+  SelectedPhoto get _photo => _args.photo;
 
   PhotoOutputFormat get _preferredOutputFormat =>
       _photo.name.toLowerCase().endsWith('.png')
@@ -65,6 +80,9 @@ class _EditorScreenState extends State<EditorScreen> {
   @override
   void initState() {
     super.initState();
+    _processor = widget.processor;
+    _exporter = widget.exporter ?? PhotoExportService();
+    _presetPreferences = widget.presetPreferences ?? PresetPreferences();
     WidgetsBinding.instance.addPostFrameCallback((_) => _renderPreview());
     _loadFavorites();
   }
@@ -73,8 +91,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_appliedArgs) return;
-    final preset = (ModalRoute.of(context)?.settings.arguments as EditorArgs)
-        .initialPreset;
+    final preset = _args.initialPreset;
     if (preset != null) {
       _settings = EditSettings(
         preset: preset,
@@ -142,23 +159,31 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _prepareExport() async {
+    final options = await showModalBottomSheet<_ExportOptions>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _ExportOptionsSheet(
+        initial: _ExportOptions(format: _preferredOutputFormat),
+      ),
+    );
+    if (!mounted || options == null) return;
     setState(() => _isExporting = true);
     try {
-      final format = _preferredOutputFormat;
       final bytes = await _processor.render(
         PhotoProcessRequest(
           sourceBytes: _photo.bytes,
           recipe: _settings.effectiveRecipe,
-          maxDimension: null,
-          quality: 95,
-          outputFormat: format,
+          maxDimension: options.maxDimension,
+          quality: options.quality,
+          outputFormat: options.format,
           cropAspectRatio: _settings.cropAspectRatio,
         ),
       );
       final exported = await _exporter.createImage(
         bytes,
         sourceName: _photo.name,
-        format: format,
+        format: options.format,
       );
       if (!mounted) return;
       var wasUsed = false;
@@ -166,7 +191,7 @@ class _EditorScreenState extends State<EditorScreen> {
         context: context,
         showDragHandle: true,
         builder: (sheetContext) => _ExportSheet(
-          format: format,
+          options: options,
           onSave: () {
             wasUsed = true;
             Navigator.pop(sheetContext);
@@ -260,6 +285,7 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ),
           TextButton.icon(
+            key: const Key('exportButton'),
             onPressed: _isProcessing || _isExporting ? null : _prepareExport,
             icon: _isExporting
                 ? const SizedBox(
@@ -812,13 +838,128 @@ class _ErrorPanel extends StatelessWidget {
   );
 }
 
+class _ExportOptions {
+  const _ExportOptions({
+    required this.format,
+    this.maxDimension,
+    this.quality = 95,
+  });
+
+  final PhotoOutputFormat format;
+  final int? maxDimension;
+  final int quality;
+
+  String get sizeLabel =>
+      maxDimension == null ? '원본 해상도' : '긴 변 ${maxDimension}px';
+}
+
+class _ExportOptionsSheet extends StatefulWidget {
+  const _ExportOptionsSheet({required this.initial});
+
+  final _ExportOptions initial;
+
+  @override
+  State<_ExportOptionsSheet> createState() => _ExportOptionsSheetState();
+}
+
+class _ExportOptionsSheetState extends State<_ExportOptionsSheet> {
+  late PhotoOutputFormat _format = widget.initial.format;
+  late int? _maxDimension = widget.initial.maxDimension;
+  late double _quality = widget.initial.quality.toDouble();
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('내보내기 설정', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            const Text('원본 파일은 바꾸지 않고 새 파일을 만들어요.'),
+            const SizedBox(height: 18),
+            Text('형식', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: PhotoOutputFormat.values
+                  .map(
+                    (format) => ChoiceChip(
+                      label: Text(
+                        format == PhotoOutputFormat.png ? 'PNG' : 'JPEG',
+                      ),
+                      selected: _format == format,
+                      onSelected: (_) => setState(() => _format = format),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            Text('출력 크기', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children:
+                  [
+                        (label: '원본 해상도', dimension: null),
+                        (label: '긴 변 2048px', dimension: 2048),
+                      ]
+                      .map(
+                        (option) => ChoiceChip(
+                          label: Text(option.label),
+                          selected: _maxDimension == option.dimension,
+                          onSelected: (_) =>
+                              setState(() => _maxDimension = option.dimension),
+                        ),
+                      )
+                      .toList(),
+            ),
+            if (_format == PhotoOutputFormat.jpeg) ...[
+              const SizedBox(height: 16),
+              Text(
+                'JPEG 품질 ${_quality.round()}',
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              Slider(
+                value: _quality,
+                min: 80,
+                max: 100,
+                divisions: 4,
+                label: _quality.round().toString(),
+                onChanged: (value) => setState(() => _quality = value),
+              ),
+            ],
+            const SizedBox(height: 8),
+            const Text('위치정보와 촬영 메타데이터는 항상 제거됩니다.'),
+            const SizedBox(height: 20),
+            FilledButton(
+              key: const Key('createExportButton'),
+              onPressed: () => Navigator.pop(
+                context,
+                _ExportOptions(
+                  format: _format,
+                  maxDimension: _maxDimension,
+                  quality: _quality.round(),
+                ),
+              ),
+              child: const Text('파일 만들기'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _ExportSheet extends StatelessWidget {
   const _ExportSheet({
-    required this.format,
+    required this.options,
     required this.onSave,
     required this.onShare,
   });
-  final PhotoOutputFormat format;
+  final _ExportOptions options;
   final Future<void> Function() onSave;
   final Future<void> Function() onShare;
 
@@ -833,8 +974,10 @@ class _ExportSheet extends StatelessWidget {
           Text('사진을 준비했어요', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
-            '위치정보를 제외한 고화질 '
-            '${format == PhotoOutputFormat.png ? 'PNG' : 'JPEG'}로 만들었어요.',
+            '${options.sizeLabel} · '
+            '${options.format == PhotoOutputFormat.png ? 'PNG' : 'JPEG'}'
+            '${options.format == PhotoOutputFormat.jpeg ? ' 품질 ${options.quality}' : ''} · '
+            '위치정보 제거',
           ),
           const SizedBox(height: 18),
           FilledButton.icon(

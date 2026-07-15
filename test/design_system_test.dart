@@ -1,69 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:framefit/core/widgets/premium_widgets.dart';
+
+import 'package:framefit/core/theme/app_theme.dart';
 
 void main() {
-  Widget host(Widget child) {
-    return MaterialApp(home: Scaffold(body: child));
-  }
-
-  testWidgets('CategoryChip exposes selected and unselected states', (
-    tester,
-  ) async {
-    var selected = false;
-
-    await tester.pumpWidget(
-      host(
-        StatefulBuilder(
-          builder: (context, setState) {
-            return CategoryChip(
-              label: '음식',
-              selected: selected,
-              onTap: () => setState(() => selected = true),
-            );
-          },
-        ),
-      ),
-    );
-
-    expect(find.byKey(const Key('categoryChip-음식')), findsOneWidget);
-    expect(find.byIcon(Icons.check), findsNothing);
-
-    await tester.tap(find.byKey(const Key('categoryChip-음식')));
-    await tester.pump();
-
-    expect(find.byIcon(Icons.check), findsOneWidget);
+  test('design tokens keep primary controls touch-safe', () {
+    expect(AppMetrics.buttonHeight, greaterThanOrEqualTo(44));
+    expect(AppMetrics.bottomNavHeight, greaterThanOrEqualTo(48));
+    expect(AppTheme.light.filledButtonTheme.style, isNotNull);
+    expect(AppTheme.light.outlinedButtonTheme.style, isNotNull);
   });
 
-  testWidgets('GhostButton and EmptyState provide practical shared states', (
+  testWidgets('primary and secondary buttons expose readable labels', (
     tester,
   ) async {
-    var tapped = false;
-
     await tester.pumpWidget(
-      host(
-        Column(
-          children: [
-            GhostButton(
-              label: '다시 보기',
-              icon: Icons.refresh,
-              onPressed: () => tapped = true,
-            ),
-            const EmptyState(
-              icon: Icons.photo_library_outlined,
-              title: '아직 사진이 없어요',
-              description: '촬영하거나 템플릿을 골라 시작하세요.',
-            ),
-          ],
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Scaffold(
+          body: Column(
+            children: [
+              FilledButton(onPressed: () {}, child: const Text('사진 불러오기')),
+              OutlinedButton(onPressed: () {}, child: const Text('카메라로 촬영')),
+            ],
+          ),
         ),
       ),
     );
 
-    await tester.tap(find.text('다시 보기'));
-    await tester.pump();
-
-    expect(tapped, isTrue);
-    expect(find.text('아직 사진이 없어요'), findsOneWidget);
-    expect(find.text('촬영하거나 템플릿을 골라 시작하세요.'), findsOneWidget);
+    expect(find.text('사진 불러오기'), findsOneWidget);
+    expect(find.text('카메라로 촬영'), findsOneWidget);
+    expect(
+      tester.getSize(find.byType(FilledButton)).height,
+      greaterThanOrEqualTo(44),
+    );
   });
 }
