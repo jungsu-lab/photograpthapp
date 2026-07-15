@@ -1,5 +1,5 @@
 name: framefit
-description: "A new Flutter project."
+description: "A local-first mobile photo preset editor."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.2
+  sdk: '>=3.11.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -31,6 +31,16 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Device input, non-destructive local processing, and export.
+  image_picker: ^1.2.3
+  camera: ^0.12.0+2
+  image: ^4.9.1
+  path_provider: ^2.1.6
+  gal: ^2.3.2
+  share_plus: ^13.2.0
+  shared_preferences: ^2.5.5
+  app_settings: ^7.0.0
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -38,6 +48,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  test: ^1.30.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -56,6 +67,12 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/japan_travel_preview.webp
+    - assets/images/preset-portrait-preview.webp
+    - assets/images/preset-food-preview.webp
+    - assets/images/preset-product-preview.webp
 
   fonts:
     - family: KimjungchulMyungjo

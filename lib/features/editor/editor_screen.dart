@@ -1,0 +1,855 @@
+import 'dart:async';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+
+import '../../data/presets/preset_catalog.dart';
+import '../../domain/models/photo_preset.dart';
+import '../../domain/models/selected_photo.dart';
+import '../../services/photo_export_service.dart';
+import '../../services/photo_processor.dart';
+import '../../services/preset_preferences.dart';
+import 'crop_panel.dart';
+
+class EditorArgs {
+  const EditorArgs({required this.photo, this.initialPreset});
+  final SelectedPhoto photo;
+  final PhotoPreset? initialPreset;
+}
+
+class EditorScreen extends StatefulWidget {
+  const EditorScreen({super.key});
+
+  @override
+  State<EditorScreen> createState() => _EditorScreenState();
+}
+
+class _EditorScreenState extends State<EditorScreen> {
+  final _processor = const PhotoProcessor();
+  final _exporter = PhotoExportService();
+  final _presetPreferences = PresetPreferences();
+  EditSettings _settings = const EditSettings();
+  Uint8List? _previewBytes;
+  String? _error;
+  bool _isProcessing = true;
+  bool _showOriginal = false;
+  bool _isExporting = false;
+  int _tab = 0;
+  int _requestId = 0;
+  final Map<String, Future<Uint8List>> _presetThumbnails = {};
+  Set<String> _favoriteIds = <String>{};
+  bool _appliedArgs = false;
+
+  SelectedPhoto get _photo =>
+      (ModalRoute.of(context)?.settings.arguments as EditorArgs).photo;
+
+  PhotoOutputFormat get _preferredOutputFormat =>
+      _photo.name.toLowerCase().endsWith('.png')
+      ? PhotoOutputFormat.png
+      : PhotoOutputFormat.jpeg;
+
+  Future<Uint8List> _thumbnailFor(PhotoPreset preset) =>
+      _presetThumbnails.putIfAbsent(
+        preset.id,
+        () => _processor.render(
+          PhotoProcessRequest(
+            sourceBytes: _photo.bytes,
+            recipe: preset.recipe.scaled(preset.defaultIntensity),
+            maxDimension: 192,
+            quality: 82,
+            outputFormat: _preferredOutputFormat,
+          ),
+        ),
+      );
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _renderPreview());
+    _loadFavorites();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_appliedArgs) return;
+    final preset = (ModalRoute.of(context)?.settings.arguments as EditorArgs)
+        .initialPreset;
+    if (preset != null) {
+      _settings = EditSettings(
+        preset: preset,
+        intensity: preset.defaultIntensity,
+      );
+    }
+    _appliedArgs = true;
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await _presetPreferences.favorites();
+      if (mounted) setState(() => _favoriteIds = favorites);
+    } catch (_) {
+      // A storage error must not block editing or export.
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final preset = _settings.preset;
+    if (preset == null) return;
+    try {
+      final favorites = await _presetPreferences.toggleFavorite(preset.id);
+      if (mounted) setState(() => _favoriteIds = favorites);
+    } catch (_) {
+      if (mounted) _message('즐겨찾기를 저장하지 못했어요.');
+    }
+  }
+
+  Future<void> _renderPreview() async {
+    final requestId = ++_requestId;
+    setState(() {
+      _isProcessing = true;
+      _error = null;
+    });
+    try {
+      final bytes = await _processor.render(
+        PhotoProcessRequest(
+          sourceBytes: _photo.bytes,
+          recipe: _settings.effectiveRecipe,
+          maxDimension: 1440,
+          outputFormat: _preferredOutputFormat,
+          cropAspectRatio: _settings.cropAspectRatio,
+        ),
+      );
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _previewBytes = bytes);
+    } catch (error) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _error = error.toString());
+    } finally {
+      if (mounted && requestId == _requestId) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  void _changeSettings(EditSettings settings) {
+    final priorPreset = _settings.preset?.id;
+    setState(() => _settings = settings);
+    if (settings.preset != null && settings.preset!.id != priorPreset) {
+      _presetPreferences.recordUse(settings.preset!.id);
+    }
+    _renderPreview();
+  }
+
+  Future<void> _prepareExport() async {
+    setState(() => _isExporting = true);
+    try {
+      final format = _preferredOutputFormat;
+      final bytes = await _processor.render(
+        PhotoProcessRequest(
+          sourceBytes: _photo.bytes,
+          recipe: _settings.effectiveRecipe,
+          maxDimension: null,
+          quality: 95,
+          outputFormat: format,
+          cropAspectRatio: _settings.cropAspectRatio,
+        ),
+      );
+      final exported = await _exporter.createImage(
+        bytes,
+        sourceName: _photo.name,
+        format: format,
+      );
+      if (!mounted) return;
+      var wasUsed = false;
+      await showModalBottomSheet<void>(
+        context: context,
+        showDragHandle: true,
+        builder: (sheetContext) => _ExportSheet(
+          format: format,
+          onSave: () {
+            wasUsed = true;
+            Navigator.pop(sheetContext);
+            return _save(exported);
+          },
+          onShare: () {
+            wasUsed = true;
+            Navigator.pop(sheetContext);
+            return _share(exported);
+          },
+        ),
+      );
+      if (!wasUsed) unawaited(_exporter.deleteTemporary(exported));
+    } catch (error) {
+      if (mounted) _message('내보내기에 실패했어요. ${_cleanError(error)}');
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _save(ExportedPhoto photo) async {
+    try {
+      await _exporter.saveToGallery(photo);
+      if (mounted) _message('FrameFit 앨범에 저장했어요.');
+    } catch (error) {
+      if (mounted) _message('사진첩 저장에 실패했어요. ${_cleanError(error)}');
+    } finally {
+      await _exporter.deleteTemporary(photo);
+    }
+  }
+
+  Future<void> _share(ExportedPhoto photo) async {
+    try {
+      await _exporter.share(photo);
+    } catch (error) {
+      if (mounted) _message('공유 창을 열지 못했어요. ${_cleanError(error)}');
+    } finally {
+      await _exporter.deleteTemporary(photo);
+    }
+  }
+
+  void _message(String message) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(message)));
+
+  String _cleanError(Object error) =>
+      error.toString().replaceFirst('Exception: ', '');
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = _photo;
+    final displayed = _showOriginal
+        ? photo.bytes
+        : (_previewBytes ?? photo.bytes);
+    final selectedPreset = _settings.preset;
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF121212),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          tooltip: '뒤로',
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '편집',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+            ),
+            Text(
+              selectedPreset?.name ?? '원본',
+              style: const TextStyle(fontSize: 12, color: Color(0xFFBBBBBB)),
+            ),
+          ],
+        ),
+        actions: [
+          if (selectedPreset != null)
+            IconButton(
+              tooltip: _favoriteIds.contains(selectedPreset.id)
+                  ? '즐겨찾기 해제'
+                  : '즐겨찾기',
+              onPressed: _toggleFavorite,
+              icon: Icon(
+                _favoriteIds.contains(selectedPreset.id)
+                    ? Icons.favorite
+                    : Icons.favorite_border,
+              ),
+            ),
+          TextButton.icon(
+            onPressed: _isProcessing || _isExporting ? null : _prepareExport,
+            icon: _isExporting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.ios_share_outlined),
+            label: const Text('내보내기'),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Expanded(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Center(
+                    child: GestureDetector(
+                      onLongPressStart: (_) =>
+                          setState(() => _showOriginal = true),
+                      onLongPressEnd: (_) =>
+                          setState(() => _showOriginal = false),
+                      child: InteractiveViewer(
+                        minScale: 1,
+                        maxScale: 4,
+                        child: Image.memory(
+                          displayed,
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                          semanticLabel: _showOriginal
+                              ? '원본 사진'
+                              : '${selectedPreset?.name ?? '편집'} 적용 사진. 길게 눌러 원본을 확인하세요.',
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 12,
+                    left: 16,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        child: Text(
+                          _showOriginal ? '원본' : (selectedPreset?.name ?? '원본'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_isProcessing)
+                    const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  if (_error != null)
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 16,
+                      child: _ErrorPanel(
+                        message: _error!,
+                        onRetry: _renderPreview,
+                      ),
+                    ),
+                  const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 14,
+                    child: Center(
+                      child: Text(
+                        '길게 눌러 원본 보기',
+                        style: TextStyle(
+                          color: Color(0xFFDDDDDD),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              color: const Color(0xFF1C1C1C),
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _EditorTab(
+                        label: '프리셋',
+                        icon: Icons.auto_awesome_outlined,
+                        selected: _tab == 0,
+                        onTap: () => setState(() => _tab = 0),
+                      ),
+                      _EditorTab(
+                        label: '조정',
+                        icon: Icons.tune,
+                        selected: _tab == 1,
+                        onTap: () => setState(() => _tab = 1),
+                      ),
+                      _EditorTab(
+                        label: '자르기',
+                        icon: Icons.crop,
+                        selected: _tab == 2,
+                        onTap: () => setState(() => _tab = 2),
+                      ),
+                      _EditorTab(
+                        label: '초기화',
+                        icon: Icons.refresh,
+                        selected: false,
+                        onTap: () => _changeSettings(const EditSettings()),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 176,
+                    child: _tab == 0
+                        ? _PresetPanel(
+                            settings: _settings,
+                            originalBytes: photo.bytes,
+                            thumbnailFor: _thumbnailFor,
+                            onSelect: (preset) => _changeSettings(
+                              _settings.copyWith(
+                                preset: preset,
+                                intensity: preset.defaultIntensity,
+                              ),
+                            ),
+                            onOriginal: () => _changeSettings(
+                              _settings.copyWith(clearPreset: true),
+                            ),
+                            onIntensity: (value) => _changeSettings(
+                              _settings.copyWith(intensity: value),
+                            ),
+                          )
+                        : _tab == 1
+                        ? _AdjustPanel(
+                            recipe: _settings.manual,
+                            onChanged: (recipe) => _changeSettings(
+                              _settings.copyWith(manual: recipe),
+                            ),
+                          )
+                        : CropPanel(
+                            aspectRatio: _settings.cropAspectRatio,
+                            onChanged: (aspectRatio) => _changeSettings(
+                              _settings.copyWith(
+                                cropAspectRatio: aspectRatio,
+                                clearCrop: aspectRatio == null,
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorTab extends StatelessWidget {
+  const _EditorTab({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: selected ? Colors.white : const Color(0xFF9B9B9B),
+              size: 20,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? Colors.white : const Color(0xFF9B9B9B),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _PresetPanel extends StatelessWidget {
+  const _PresetPanel({
+    required this.settings,
+    required this.originalBytes,
+    required this.thumbnailFor,
+    required this.onSelect,
+    required this.onOriginal,
+    required this.onIntensity,
+  });
+  final EditSettings settings;
+  final Uint8List originalBytes;
+  final Future<Uint8List> Function(PhotoPreset preset) thumbnailFor;
+  final ValueChanged<PhotoPreset> onSelect;
+  final VoidCallback onOriginal;
+  final ValueChanged<double> onIntensity;
+
+  @override
+  Widget build(BuildContext context) {
+    final orderedPresets = [...presetCatalog];
+    final selectedPreset = settings.preset;
+    if (selectedPreset != null) {
+      orderedPresets.removeWhere((preset) => preset.id == selectedPreset.id);
+      orderedPresets.insert(0, selectedPreset);
+    }
+
+    return Column(
+      children: [
+        SizedBox(
+          height: 104,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            scrollDirection: Axis.horizontal,
+            itemCount: orderedPresets.length + 1,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final isOriginal = index == 0;
+              final preset = isOriginal ? null : orderedPresets[index - 1];
+              final selected = isOriginal
+                  ? settings.preset == null
+                  : settings.preset?.id == preset!.id;
+              return GestureDetector(
+                onTap: isOriginal ? onOriginal : () => onSelect(preset!),
+                child: SizedBox(
+                  width: 72,
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 64,
+                        decoration: BoxDecoration(
+                          color: isOriginal
+                              ? const Color(0xFF444444)
+                              : Color(preset!.swatch),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: selected ? Colors.white : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: isOriginal
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  originalBytes,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: FutureBuilder<Uint8List>(
+                                  future: thumbnailFor(preset!),
+                                  builder: (context, snapshot) {
+                                    final bytes = snapshot.data;
+                                    if (bytes == null) {
+                                      return ColoredBox(
+                                        color: Color(preset.swatch),
+                                        child: const Center(
+                                          child: SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return Image.memory(
+                                      bytes,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                      gaplessPlayback: true,
+                                    );
+                                  },
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        isOriginal ? '원본' : preset!.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: selected
+                              ? Colors.white
+                              : const Color(0xFFB4B4B4),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        if (settings.preset != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                const Text(
+                  '강도',
+                  style: TextStyle(color: Colors.white, fontSize: 12),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: settings.intensity,
+                    min: 0,
+                    max: 1,
+                    divisions: 20,
+                    activeColor: Colors.white,
+                    inactiveColor: const Color(0xFF555555),
+                    onChanged: onIntensity,
+                  ),
+                ),
+                Text(
+                  '${(settings.intensity * 100).round()}',
+                  style: const TextStyle(color: Colors.white, fontFeatures: []),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AdjustPanel extends StatelessWidget {
+  const _AdjustPanel({required this.recipe, required this.onChanged});
+  final PresetRecipe recipe;
+  final ValueChanged<PresetRecipe> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final controls = <_AdjustmentControl>[
+      _AdjustmentControl(
+        '노출',
+        recipe.exposureEv,
+        -2,
+        2,
+        (value) => recipe.copyWith(exposureEv: value),
+      ),
+      _AdjustmentControl(
+        '대비',
+        recipe.contrast,
+        -1,
+        1,
+        (value) => recipe.copyWith(contrast: value),
+      ),
+      _AdjustmentControl(
+        '하이라이트',
+        recipe.highlights,
+        -1,
+        1,
+        (value) => recipe.copyWith(highlights: value),
+      ),
+      _AdjustmentControl(
+        '그림자',
+        recipe.shadows,
+        -1,
+        1,
+        (value) => recipe.copyWith(shadows: value),
+      ),
+      _AdjustmentControl(
+        '흰색',
+        recipe.whites,
+        -1,
+        1,
+        (value) => recipe.copyWith(whites: value),
+      ),
+      _AdjustmentControl(
+        '검정',
+        recipe.blacks,
+        -1,
+        1,
+        (value) => recipe.copyWith(blacks: value),
+      ),
+      _AdjustmentControl(
+        '채도',
+        recipe.saturation,
+        -1,
+        1,
+        (value) => recipe.copyWith(saturation: value),
+      ),
+      _AdjustmentControl(
+        '생동감',
+        recipe.vibrance,
+        -1,
+        1,
+        (value) => recipe.copyWith(vibrance: value),
+      ),
+      _AdjustmentControl(
+        '색온도',
+        recipe.temperature,
+        -1,
+        1,
+        (value) => recipe.copyWith(temperature: value),
+      ),
+      _AdjustmentControl(
+        '틴트',
+        recipe.tint,
+        -1,
+        1,
+        (value) => recipe.copyWith(tint: value),
+      ),
+      _AdjustmentControl(
+        '선명도',
+        recipe.sharpness,
+        0,
+        1,
+        (value) => recipe.copyWith(sharpness: value),
+      ),
+      _AdjustmentControl(
+        '비네트',
+        recipe.vignette,
+        0,
+        1,
+        (value) => recipe.copyWith(vignette: value),
+      ),
+      _AdjustmentControl(
+        '페이드',
+        recipe.fade,
+        0,
+        1,
+        (value) => recipe.copyWith(fade: value),
+      ),
+      _AdjustmentControl(
+        '그레인',
+        recipe.grain,
+        0,
+        1,
+        (value) => recipe.copyWith(grain: value),
+      ),
+    ];
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      scrollDirection: Axis.horizontal,
+      itemCount: controls.length,
+      itemBuilder: (context, index) {
+        final item = controls[index];
+        return SizedBox(
+          width: 170,
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              Text(
+                item.label,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              ),
+              Slider(
+                value: item.value,
+                min: item.min,
+                max: item.max,
+                activeColor: Colors.white,
+                inactiveColor: const Color(0xFF555555),
+                onChanged: (value) => onChanged(item.update(value)),
+              ),
+              Text(
+                item.value.toStringAsFixed(2),
+                style: const TextStyle(color: Color(0xFFB4B4B4), fontSize: 12),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AdjustmentControl {
+  const _AdjustmentControl(
+    this.label,
+    this.value,
+    this.min,
+    this.max,
+    this.update,
+  );
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final PresetRecipe Function(double value) update;
+}
+
+class _ErrorPanel extends StatelessWidget {
+  const _ErrorPanel({required this.message, required this.onRetry});
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFFFDECEA),
+    borderRadius: BorderRadius.circular(12),
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Color(0xFFB3261E)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: Color(0xFF6A1B16), fontSize: 12),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: const Text('다시 시도')),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ExportSheet extends StatelessWidget {
+  const _ExportSheet({
+    required this.format,
+    required this.onSave,
+    required this.onShare,
+  });
+  final PhotoOutputFormat format;
+  final Future<void> Function() onSave;
+  final Future<void> Function() onShare;
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('사진을 준비했어요', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 6),
+          Text(
+            '위치정보를 제외한 고화질 '
+            '${format == PhotoOutputFormat.png ? 'PNG' : 'JPEG'}로 만들었어요.',
+          ),
+          const SizedBox(height: 18),
+          FilledButton.icon(
+            onPressed: onSave,
+            icon: const Icon(Icons.download),
+            label: const Text('사진첩에 저장'),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: onShare,
+            icon: const Icon(Icons.ios_share),
+            label: const Text('다른 앱으로 공유'),
+          ),
+        ],
+      ),
+    ),
+  );
+}

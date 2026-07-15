@@ -31,7 +31,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+/android/build/
 /coverage/
+/*.apk
 
 # Symbolication related
 app.*.symbols
@@ -43,3 +45,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Never commit credentials, signing material, or real customer photos.
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.mobileprovision
+/test/private_photos/
+/docs/private_screenshots/
+
+# Lossless source copies used only while preparing bundled WebP thumbnails.
+/assets/images/japan_travel_preview.png
+/assets/images/preset-portrait-preview.png
+/assets/images/preset-food-preview.png
+/assets/images/preset-product-preview.png

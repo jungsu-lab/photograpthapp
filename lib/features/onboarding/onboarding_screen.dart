@@ -1,356 +1,141 @@
 import 'package:flutter/material.dart';
 
-import '../../core/router/app_routes.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/premium_widgets.dart';
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key, required this.onCompleted});
 
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  final Future<void> Function() onCompleted;
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final controller = PageController();
-  int page = 0;
-
-  static const pages = [
-    (
-      title: '찍기 전에 한 번만 맞춰요',
-      body: '얼굴 위치, 여백, 밝기를 화면에서 가볍게 확인해요.',
-      type: _VisualType.camera,
-    ),
-    (
-      title: '원하는 느낌부터 고르세요',
-      body: '프로필, 음식, 여행처럼 상황에 맞는 기준을 먼저 잡아요.',
-      type: _VisualType.presets,
-    ),
-    (
-      title: '저장 전엔 가볍게 비교',
-      body: '원본과 시안을 보고 마음에 드는 방향만 남겨요.',
-      type: _VisualType.preview,
-    ),
-  ];
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _OnboardingTopBar(),
-          Expanded(
-            child: PageView.builder(
-              controller: controller,
-              onPageChanged: (value) => setState(() => page = value),
-              itemCount: pages.length,
-              itemBuilder: (context, index) {
-                final item = pages[index];
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                        child: _StoryVisual(
-                          type: item.type,
-                          active: index == page,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                      child: Text(
-                        item.title,
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                      child: Text(
-                        item.body,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-            child: Row(
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFF9F8F5),
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 18, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
               children: [
-                Text(
-                  '${page + 1} / 3',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Row(
-                    children: List.generate(pages.length, (index) {
-                      return Expanded(
-                        child: Container(
-                          height: 1,
-                          margin: EdgeInsets.only(
-                            right: index == pages.length - 1 ? 0 : 6,
-                          ),
-                          color: page == index
-                              ? AppColors.textPrimary
-                              : AppColors.lineStrong,
-                        ),
-                      );
-                    }),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFE53935),
+                    shape: BoxShape.circle,
                   ),
+                  child: SizedBox(width: 12, height: 12),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'FrameFit',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 18),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: PrimaryButton(
-              key: const Key('onboardingPrimaryCta'),
-              label: page == pages.length - 1 ? '바로 시작' : '다음',
-              onPressed: () {
-                if (page < pages.length - 1) {
-                  controller.nextPage(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                  );
-                  return;
-                }
-                Navigator.pushReplacementNamed(context, AppRoutes.home);
-              },
+            const Spacer(),
+            Container(
+              height: 270,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFE9D3B9),
+                    Color(0xFF8CA5B0),
+                    Color(0xFF292929),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: const Stack(
+                children: [
+                  Positioned.fill(child: _OnboardingGrid()),
+                  Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Text(
+                        'YOUR PHOTO,\nYOUR MOOD',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          height: 1.05,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OnboardingTopBar extends StatelessWidget {
-  const _OnboardingTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.appBackground,
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 16, 12),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 5,
-            backgroundColor: AppColors.profileAccent,
-          ),
-          const SizedBox(width: 8),
-          Text('FrameFit', style: Theme.of(context).textTheme.titleMedium),
-          const Spacer(),
-          Text('PHOTO GUIDE', style: Theme.of(context).textTheme.labelSmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _StoryVisual extends StatelessWidget {
-  const _StoryVisual({required this.type, required this.active});
-
-  final _VisualType type;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      key: active ? const Key('onboardingEditorialFrame') : null,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.line),
-          bottom: BorderSide(color: AppColors.line),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
-        child: Column(
-          children: [
-            _ReferenceStrip(type: type, active: active),
+            const SizedBox(height: 30),
+            const Text(
+              '사진을 고르고,\n원하는 색감을 한 번에 적용하세요.',
+              style: TextStyle(
+                fontSize: 31,
+                fontWeight: FontWeight.w800,
+                height: 1.15,
+              ),
+            ),
             const SizedBox(height: 12),
-            Expanded(
-              child: switch (type) {
-                _VisualType.camera => const _CameraStory(),
-                _VisualType.presets => const _PresetStory(),
-                _VisualType.preview => const _PreviewStory(),
-              },
+            const Text(
+              '원본은 그대로 두고 프리셋 강도와 기본 보정만 간단하게 조절할 수 있어요.',
+              style: TextStyle(
+                color: Color(0xFF626262),
+                fontSize: 15,
+                height: 1.45,
+              ),
+            ),
+            const Spacer(),
+            FilledButton.icon(
+              key: const Key('onboardingPrimaryCta'),
+              onPressed: onCompleted,
+              icon: const Icon(Icons.photo_library_outlined),
+              label: const Text('사진 편집 시작하기'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: const Color(0xFF151515),
+                foregroundColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onCompleted,
+              child: const Center(child: Text('둘러보기 건너뛰기')),
             ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
-class _ReferenceStrip extends StatelessWidget {
-  const _ReferenceStrip({required this.type, required this.active});
-
-  final _VisualType type;
-  final bool active;
+class _OnboardingGrid extends StatelessWidget {
+  const _OnboardingGrid();
 
   @override
-  Widget build(BuildContext context) {
-    final label = switch (type) {
-      _VisualType.camera => 'COMPOSITION',
-      _VisualType.presets => 'PRESET LIBRARY',
-      _VisualType.preview => 'BEFORE / AFTER',
-    };
-
-    return Container(
-      key: active ? const Key('onboardingReferenceStrip') : null,
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
-      padding: const EdgeInsets.only(bottom: 9),
-      child: Row(
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-          const Spacer(),
-          const Icon(Icons.more_horiz, size: 18),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      CustomPaint(painter: _OnboardingGridPainter());
 }
 
-class _CameraStory extends StatelessWidget {
-  const _CameraStory();
+class _OnboardingGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: .35)
+      ..strokeWidth = 1;
+    for (var i = 1; i <= 2; i++) {
+      canvas.drawLine(
+        Offset(size.width * i / 3, 0),
+        Offset(size.width * i / 3, size.height),
+        paint,
+      );
+      canvas.drawLine(
+        Offset(0, size.height * i / 3),
+        Offset(size.width, size.height * i / 3),
+        paint,
+      );
+    }
+  }
 
   @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(AppMetrics.thumbnailRadius),
-      child: Stack(
-        children: [
-          const Positioned.fill(
-            child: PhotoTile(
-              data: PhotoTileData(
-                label: 'profile',
-                baseColor: Color(0xFFB8AAA0),
-                accentColor: Color(0xFF2A2A2A),
-              ),
-            ),
-          ),
-          const Positioned.fill(child: CameraGuideOverlay(mode: '프로필')),
-          Positioned(
-            left: 14,
-            right: 14,
-            bottom: 14,
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              color: Colors.white.withValues(alpha: 0.9),
-              child: Text(
-                '얼굴을 조금만 오른쪽으로 옮겨볼까요?',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-
-class _PresetStory extends StatelessWidget {
-  const _PresetStory();
-
-  @override
-  Widget build(BuildContext context) {
-    const tiles = [
-      PhotoTileData(
-        label: 'profile',
-        baseColor: Color(0xFFD3B7A5),
-        accentColor: Color(0xFF111111),
-      ),
-      PhotoTileData(
-        label: 'film',
-        baseColor: Color(0xFF7FA9C8),
-        accentColor: Color(0xFFE0A45B),
-      ),
-      PhotoTileData(
-        label: 'food',
-        baseColor: Color(0xFFC9824A),
-        accentColor: Color(0xFF6C3E20),
-      ),
-      PhotoTileData(
-        label: 'mood',
-        baseColor: Color(0xFF9A768C),
-        accentColor: Color(0xFF352A35),
-      ),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: PhotoGrid(items: tiles, columns: 2, aspectRatio: 0.82)),
-      ],
-    );
-  }
-}
-
-class _PreviewStory extends StatelessWidget {
-  const _PreviewStory();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Expanded(
-          child: Row(
-            children: [
-              Expanded(
-                child: PhotoTile(
-                  data: PhotoTileData(
-                    label: 'original',
-                    baseColor: Color(0xFFC7B7A6),
-                    accentColor: Color(0xFF8EA0A8),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: PhotoTile(
-                  data: PhotoTileData(
-                    label: 'preview',
-                    baseColor: Color(0xFFEFE3CA),
-                    accentColor: Color(0xFFB8C9D4),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        const PreviewOptionCard(
-          label: '밝게',
-          description: 'SNS용으로 환하게 맞춰요.',
-          selected: true,
-          onTap: _noop,
-        ),
-      ],
-    );
-  }
-}
-
-void _noop() {}
-
-enum _VisualType { camera, presets, preview }

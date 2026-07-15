@@ -1,118 +1,99 @@
 # FrameFit
 
-FrameFit is a Flutter prototype for a beginner-friendly photo coaching app. The product goal is to help users choose a photo style, receive composition guidance while shooting, preview template-based edits, and save a finished result.
+FrameFit is a local-first Flutter photo editor for people who want a finished
+look without learning a complex editor. Choose or capture one photo, apply a
+colour preset in one tap, adjust its strength, compare it with the original,
+then save or share a new file.
 
-The current app is not a real camera or AI editing product yet. It is a product-definition and UI-flow prototype that demonstrates the intended screens with local mock data and simulated visuals.
+## What works today
 
-## User Problem
+- Choose a real JPEG or PNG from the system photo picker.
+- Capture a photo with the in-app front or rear camera.
+- Apply 12 numeric presets across Basic correction, Japan travel, Camera
+  effects, and Monochrome categories.
+- Use a 0–100 preset strength slider; values are interpolated from the
+  original settings and strength 0 is visually unchanged.
+- Make local exposure, contrast, highlights, shadows, saturation, vibrance,
+  temperature, tint, sharpness, vignette, fade, and grain adjustments.
+- Zoom the image and press-and-hold to compare the unmodified original.
+- Use fixed centred crops: original, 1:1, 4:5, and 16:9.
+- Export from the original resolution as JPEG, or preserve PNG output and
+  transparency for PNG input; save to the FrameFit album or open the system
+  share sheet.
+- Keep favourites and recent preset use on-device. No account is required.
 
-Many users know the kind of photo they want, but not the composition, distance, lighting, background, or crop choices needed to get it. Traditional editing apps help after the photo is taken; FrameFit is meant to guide the shot before capture and then provide a simple template-based preview flow afterward.
+## Intentional MVP limits
 
-## MVP Scope
+- The editor performs global colour adjustments only. It does not provide
+  face-aware retouching, object detection, selective masks, perspective
+  correction, RAW editing, batch editing, cloud sync, analytics, or AI image
+  generation.
+- Camera guidance is a simple rule-based overlay, not real-time composition
+  analysis or a composition score.
+- HEIC is not currently accepted by the local processor. Convert it to JPEG or
+  PNG before editing.
 
-The roadmap MVP focuses on validating whether a shooting coach is useful:
+## Privacy and security
 
-- Onboarding that explains the photo-coach value.
-- Home screen that routes quickly to shooting or template selection.
-- Template library for common use cases such as profile, selfie, food, travel, product, and mood photos.
-- Camera coach UI with composition overlay and short guidance.
-- Post-capture analysis summary.
-- Preview and result screens for template-based edit directions.
+- Editing and rendering occur on the device. FrameFit does not upload photos,
+  image paths, metadata, or edit settings to a server.
+- A new export never copies JPEG EXIF/XMP/IPTC/comment metadata; this removes
+  GPS location data by default. The original file is never modified.
+- Temporary export files are removed after saving, sharing, or dismissing the
+  export sheet.
+- Photo and camera access is requested only after the user chooses that
+  action. If camera access was permanently denied, the app offers a direct
+  link to the application settings page.
+- Do not commit real photos, `.env` files, signing keys, certificates, or
+  service-account files.
 
-Deferred from the MVP: social feeds, accounts, paid subscriptions, complex editors, video coaching, cloud processing, and fully automatic generative retouching.
-
-## Current Status
-
-This repository has completed roadmap Phases 0-3 for product definition, template data, and the Home/Template browsing flow, with a mocked UI prototype for:
-
-- `OnboardingScreen`
-- `HomeScreen`
-- `TemplateScreen`
-- `CameraScreen`
-- `AnalysisScreen`
-- `PreviewScreen`
-- `ResultScreen`
-
-Implemented today:
-
-- Flutter app shell, routing, light editorial theme, shared UI widgets, and local mock template data.
-- A Home screen that introduces FrameFit, highlights recommended templates, and links into template browsing.
-- A Template Library with category filtering, data-driven sample visuals, and template cards.
-- A Template Detail screen with larger previews, descriptions, capture tips, composition guidance, and a start action into the mock camera flow.
-- A simulated camera surface with static composition guidance by mode.
-- Static analysis scores and recommendation copy.
-- Mock preview/result images using generated tonal placeholder widgets.
-
-Not implemented yet:
-
-- Device camera integration, camera permissions, gallery import, or captured image persistence.
-- Real face/person/object detection.
-- Real composition, brightness, background, blur, or focus analysis.
-- Actual template rendering, AI editing, high-resolution export, gallery save, or platform share.
-- User accounts, analytics, backend services, or remote configuration.
-
-## Run The App
-
-From the repository root:
+## Run and verify
 
 ```bash
-cd /home/jungsu/photograpthapp
 flutter pub get
+flutter analyze
+flutter test
 flutter run
 ```
 
-For a web preview:
+For Android, use JDK 17 or later and enable Windows Developer Mode when the
+Flutter tooling requests plugin symlink support. The in-app camera supports
+Android 7.0 (API 24) or later.
+
+To make a small Android release APK for each CPU type:
 
 ```bash
-flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8081
+flutter build apk --release --split-per-abi
 ```
 
-Then open `http://localhost:8081`.
+The current Android `release` build is signed with Flutter's debug key for
+device testing only. Configure a private production keystore outside the
+repository before Play Store or public distribution.
 
-Useful checks:
+Install `app-arm64-v8a-release.apk` on current Galaxy and most recent Android
+phones. The checked real-device flow and remaining checks are recorded in
+[docs/DEVICE_TEST_CHECKLIST.md](docs/DEVICE_TEST_CHECKLIST.md).
+The distinction between implemented and directly verified MVP work is tracked
+in [docs/MVP_STATUS.md](docs/MVP_STATUS.md).
 
-```bash
-flutter analyze
-flutter test
-```
-
-## Folder Structure
+## Project layout
 
 ```text
 lib/
-  main.dart                 App entry point.
-  app.dart                  MaterialApp, theme, routes, initial screen.
-  core/
-    router/                 Named route map.
-    theme/                  App colors, metrics, and text styles.
-    utils/                  Small formatting helpers.
-    widgets/                Shared cards, buttons, photo mocks, score UI.
-  data/
-    mock/                   Local template fixtures.
-    models/                 Template and navigation argument models.
-    repositories/           Local template repository wrapper.
-  features/
-    onboarding/             Product intro flow.
-    home/                   Main hub.
-    templates/              Template browser.
-    camera/                 Mock camera coach UI.
-    analysis/               Static post-capture analysis UI.
-    preview/                Mock before/after and edit direction UI.
-    result/                 Mock final result UI.
-
-docs/
-  FEATURE_SPEC.md           Phase 0 product and MVP boundaries.
-  DESIGN_GUIDE.md           Current design direction and UI rules.
-  TEMPLATE_SCHEMA.md        Current and target template data shape.
+  data/presets/       Built-in numeric preset catalogue
+  domain/models/      Photo, preset, and edit-setting data models
+  features/           Onboarding, Home, library, camera, and editor screens
+  services/           Input, processing, export, preferences, and settings
+  core/               Routing, theme, and shared UI
+test/                 Preset, processor, and UI-flow tests
+docs/                 Device-test record and product documentation
 ```
 
-## Documentation
+## Preset processing
 
-- [ROADMAP.md](ROADMAP.md) defines the long-term product plan and phase sequence.
-- [docs/FEATURE_SPEC.md](docs/FEATURE_SPEC.md) summarizes the MVP feature boundaries.
-- [docs/DESIGN_GUIDE.md](docs/DESIGN_GUIDE.md) documents the current visual direction.
-- [docs/TEMPLATE_SCHEMA.md](docs/TEMPLATE_SCHEMA.md) documents the current mock template model and the planned richer schema.
-
-## Important Boundary
-
-Roadmap Phase 4 and later features are future work. Any current AI, camera, detection, save, share, and editing behavior shown in the UI is mocked unless a later implementation phase explicitly adds the real capability.
+Recipes have bounded numeric values and use a fixed rendering order: orientation
+normalisation, exposure, white balance/temperature/tint, tonal adjustments,
+colour, fade, vignette, deterministic grain, sharpness, clamping, and
+encoding. Preview uses a reduced proxy; export renders again from the original
+resolution. See [lib/domain/models/photo_preset.dart](lib/domain/models/photo_preset.dart)
+and [lib/services/photo_processor.dart](lib/services/photo_processor.dart).

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/router/app_routes.dart';
 import '../../core/widgets/premium_widgets.dart';
 import '../../data/models/edit_session.dart';
 import '../../data/repositories/template_repository.dart';
@@ -112,11 +111,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
             key: const Key('previewApplyCta'),
             label: '이 느낌으로 보기',
             icon: Icons.check,
-            onPressed: () => Navigator.pushNamed(
-              context,
-              AppRoutes.result,
-              arguments: ResultArgs(template: template, previewStyle: selected),
-            ),
+            // Kept only so the legacy, unreachable prototype remains
+            // compilable while the real editor owns the active flow.
+            onPressed: () => Navigator.maybePop(context),
           ),
         ],
       ),

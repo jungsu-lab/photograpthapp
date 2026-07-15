@@ -1,8 +1,9 @@
-gradle-wrapper.jar
+## The Gradle Wrapper is required for reproducible local and CI Android builds.
+!gradle/wrapper/gradle-wrapper.jar
 /.gradle
 /captures/
-/gradlew
-/gradlew.bat
+!/gradlew
+!/gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/

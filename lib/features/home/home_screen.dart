@@ -1,368 +1,421 @@
 import 'package:flutter/material.dart';
 
 import '../../core/router/app_routes.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/premium_widgets.dart';
-import '../../data/models/edit_session.dart';
-import '../../data/models/template.dart';
-import '../../data/repositories/template_repository.dart';
+import '../../data/presets/preset_catalog.dart';
+import '../../data/presets/preset_preview_assets.dart';
+import '../../domain/models/photo_preset.dart';
+import '../../services/photo_input_service.dart';
+import '../../services/preset_preferences.dart';
+import '../editor/editor_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static const repository = TemplateRepository();
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final _input = PhotoInputService();
+  final _presetPreferences = PresetPreferences();
+  bool _openingPhoto = false;
+  List<PhotoPreset> _recentPresets = const [];
 
   @override
-  Widget build(BuildContext context) {
-    final templates = repository.recommended();
-    final categories = repository.categories.where((item) => item != '전체');
+  void initState() {
+    super.initState();
+    _loadRecentPresets();
+  }
 
-    return AppScaffold(
-      padding: EdgeInsets.zero,
-      bottomNavigation: const _HomeBottomNav(),
+  Future<void> _loadRecentPresets() async {
+    try {
+      final ids = await _presetPreferences.recentIds();
+      final presetsById = {
+        for (final preset in presetCatalog) preset.id: preset,
+      };
+      final recent = ids
+          .map((id) => presetsById[id])
+          .whereType<PhotoPreset>()
+          .toList();
+      if (mounted) setState(() => _recentPresets = recent);
+    } catch (_) {
+      // Preference history is optional; photo editing stays usable.
+    }
+  }
+
+  Future<void> _startEditor({PhotoPreset? initialPreset}) async {
+    if (_openingPhoto) return;
+    setState(() => _openingPhoto = true);
+    try {
+      final photo = await _input.pickFromGallery();
+      if (!mounted || photo == null) return;
+      await Navigator.pushNamed(
+        context,
+        AppRoutes.editor,
+        arguments: EditorArgs(photo: photo, initialPreset: initialPreset),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '사진을 열지 못했어요. ${error.toString().replaceFirst('Exception: ', '')}',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _openingPhoto = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFF9F8F5),
+    appBar: AppBar(
+      backgroundColor: const Color(0xFFF9F8F5),
+      elevation: 0,
+      title: const Row(
+        children: [
+          _BrandDot(),
+          SizedBox(width: 8),
+          Text(
+            'FrameFit',
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          tooltip: '프리셋 보기',
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.templates),
+          icon: const Icon(Icons.auto_awesome_outlined),
+        ),
+      ],
+    ),
+    body: SafeArea(
+      top: false,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 92),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
         children: [
-          const _HomeTopBar(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-            child: Text(
-              '오늘 찍을 사진, 먼저 맞춰볼까요?',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Text(
-              '사진 종류를 고르면 화면에서 위치와 여백을 잡아볼 수 있어요.',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: _LeadGallery(),
-          ),
-          const SizedBox(height: 18),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _QuickActions(
-              onCamera: () => Navigator.pushNamed(context, AppRoutes.camera),
-              onTemplates: () =>
-                  Navigator.pushNamed(context, AppRoutes.templates),
-            ),
-          ),
-          const SizedBox(height: 26),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SectionHeader(
-              title: '카테고리',
-              subtitle: '상황에 맞게 빠르게 고르기',
-              actionLabel: '전체',
-              onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
+          Text(
+            '사진 한 장으로\n오늘의 분위기를 바꿔보세요.',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              height: 1.13,
             ),
           ),
           const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _CategoryEntryRail(categories: categories.toList()),
+          const Text(
+            '복잡한 보정 대신 마음에 드는 프리셋을 고르고, 강도만 조절하세요.',
+            style: TextStyle(color: Color(0xFF656565), height: 1.45),
           ),
           const SizedBox(height: 26),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: SectionHeader(
-              title: '추천 템플릿',
-              subtitle: '처음 찍어도 덜 헤매는 기준',
-              actionLabel: '전체',
-              onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
-            ),
+          _PhotoEntryCard(
+            busy: _openingPhoto,
+            onGallery: _startEditor,
+            onCamera: () => Navigator.pushNamed(context, AppRoutes.camera),
           ),
-          const SizedBox(height: 10),
-          _TemplateRail(templates: templates),
-          const SizedBox(height: 26),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: SectionHeader(title: '최근 사진', subtitle: '작업한 사진을 한곳에 모아요.'),
+          const SizedBox(height: 30),
+          _SectionHeader(
+            title: '바로 써보기',
+            action: '모두 보기',
+            onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
           ),
-          const SizedBox(height: 10),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: PhotoGrid(
-              items: [
-                PhotoTileData(
-                  label: 'portrait',
-                  baseColor: Color(0xFFB8AAA0),
-                  accentColor: Color(0xFF2B2B2B),
-                ),
-                PhotoTileData(
-                  label: 'sunset',
-                  baseColor: Color(0xFFE0A45B),
-                  accentColor: Color(0xFF6F6570),
-                ),
-                PhotoTileData(
-                  label: 'food',
-                  baseColor: Color(0xFFC9824A),
-                  accentColor: Color(0xFF6C3E20),
-                ),
-                PhotoTileData(
-                  label: 'product',
-                  baseColor: Color(0xFFE8E5DE),
-                  accentColor: Color(0xFFB8B8B2),
-                ),
-              ],
-              columns: 2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeTopBar extends StatelessWidget {
-  const _HomeTopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('homeEditorialHeader'),
-      decoration: const BoxDecoration(
-        color: AppColors.appBackground,
-        border: Border(bottom: BorderSide(color: AppColors.line)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 16, 10),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 5,
-            backgroundColor: AppColors.profileAccent,
-          ),
-          const SizedBox(width: 8),
-          Text('FrameFit', style: Theme.of(context).textTheme.titleMedium),
-          const Spacer(),
-          const StatusPill(label: '촬영 전 체크', icon: Icons.grid_3x3),
-        ],
-      ),
-    );
-  }
-}
-
-class _LeadGallery extends StatelessWidget {
-  const _LeadGallery();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      key: const Key('homeLeadGallery'),
-      children: [
-        const Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: PhotoTile(
-                  data: PhotoTileData(
-                    label: 'composition',
-                    baseColor: Color(0xFFB8AAA0),
-                    accentColor: Color(0xFF2B2B2B),
-                  ),
-                ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 156,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: presetCatalog.take(6).length,
+              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              itemBuilder: (context, index) => _PresetPreviewCard(
+                preset: presetCatalog[index],
+                busy: _openingPhoto,
+                onTap: () => _startEditor(initialPreset: presetCatalog[index]),
               ),
             ),
-            SizedBox(width: 8),
+          ),
+          const SizedBox(height: 30),
+          const _SectionHeader(title: '최근 작업'),
+          const SizedBox(height: 12),
+          _RecentPresetPanel(
+            presets: _recentPresets,
+            busy: _openingPhoto,
+            onSelect: (preset) => _startEditor(initialPreset: preset),
+          ),
+          const SizedBox(height: 26),
+          TextButton.icon(
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.camera),
+            icon: const Icon(Icons.grid_view_outlined),
+            label: const Text('촬영 전에 구도 코치 열기'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF333333),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _RecentPresetPanel extends StatelessWidget {
+  const _RecentPresetPanel({
+    required this.presets,
+    required this.busy,
+    required this.onSelect,
+  });
+
+  final List<PhotoPreset> presets;
+  final bool busy;
+  final ValueChanged<PhotoPreset> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    if (presets.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.history, color: Color(0xFF747474)),
+            SizedBox(width: 12),
             Expanded(
-              flex: 2,
-              child: Column(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 1.18,
-                    child: PhotoTile(
-                      data: PhotoTileData(
-                        label: 'preset',
-                        baseColor: Color(0xFFEFE3CA),
-                        accentColor: Color(0xFFB8C9D4),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  AspectRatio(
-                    aspectRatio: 1.18,
-                    child: PhotoTile(
-                      data: PhotoTileData(
-                        label: 'gallery',
-                        baseColor: Color(0xFFE8E5DE),
-                        accentColor: Color(0xFFB8B8B2),
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                '아직 사용한 프리셋이 없어요. 사진을 불러와 첫 프리셋을 적용해 보세요.',
+                style: TextStyle(color: Color(0xFF5F5F5F), height: 1.35),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(
-              top: BorderSide(color: AppColors.line),
-              bottom: BorderSide(color: AppColors.line),
+      );
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: presets
+          .map(
+            (preset) => ActionChip(
+              avatar: const Icon(Icons.history, size: 16),
+              label: Text(preset.name),
+              tooltip: '${preset.name} 프리셋으로 사진 선택',
+              onPressed: busy ? null : () => onSelect(preset),
             ),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            children: [
-              Text('구도 82', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  '얼굴을 조금만 오른쪽으로 옮기면 여백이 편해져요.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+          )
+          .toList(),
     );
   }
 }
 
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({required this.onCamera, required this.onTemplates});
+class _BrandDot extends StatelessWidget {
+  const _BrandDot();
+  @override
+  Widget build(BuildContext context) => const DecoratedBox(
+    decoration: BoxDecoration(color: Color(0xFFE53935), shape: BoxShape.circle),
+    child: SizedBox(width: 12, height: 12),
+  );
+}
 
+class _PhotoEntryCard extends StatelessWidget {
+  const _PhotoEntryCard({
+    required this.busy,
+    required this.onGallery,
+    required this.onCamera,
+  });
+  final bool busy;
+  final VoidCallback onGallery;
   final VoidCallback onCamera;
-  final VoidCallback onTemplates;
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      key: const Key('homeQuickActions'),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: const Color(0xFF181818),
+      borderRadius: BorderRadius.circular(22),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x22000000),
+          blurRadius: 18,
+          offset: Offset(0, 8),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: PrimaryButton(
-            key: const Key('homePrimaryCta'),
-            label: '찍기 전에 맞추기',
-            icon: Icons.photo_camera_outlined,
-            onPressed: onCamera,
+        const Icon(Icons.auto_awesome, color: Color(0xFFF1D591)),
+        const SizedBox(height: 14),
+        const Text(
+          '실제 사진에\n프리셋을 적용하세요.',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            height: 1.15,
           ),
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: SecondaryButton(
-            key: const Key('homeSecondaryCta'),
-            label: '스타일 고르기',
-            icon: Icons.tune,
-            onPressed: onTemplates,
+        const SizedBox(height: 8),
+        const Text(
+          '원본은 그대로 보존하고, 결과만 새 사진으로 저장해요.',
+          style: TextStyle(color: Color(0xFFBFBFBF), height: 1.4),
+        ),
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          key: const Key('importPhotoButton'),
+          onPressed: busy ? null : onGallery,
+          icon: busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.add_photo_alternate_outlined),
+          label: const Text('사진 불러오기'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(50),
+            backgroundColor: Colors.white,
+            foregroundColor: const Color(0xFF171717),
+          ),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: busy ? null : onCamera,
+          icon: const Icon(Icons.photo_camera_outlined),
+          label: const Text('카메라로 촬영'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(46),
+            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF181818),
+            side: const BorderSide(color: Color(0xFF626262)),
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
 }
 
-class _TemplateRail extends StatelessWidget {
-  const _TemplateRail({required this.templates});
-
-  final List<EditTemplate> templates;
-
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, this.action, this.onAction});
+  final String title;
+  final String? action;
+  final VoidCallback? onAction;
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      key: const Key('homeTemplateRail'),
-      height: 206,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        scrollDirection: Axis.horizontal,
-        itemCount: templates.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (context, index) {
-          final template = templates[index];
-          return MotionIn(
-            delay: Duration(milliseconds: 35 * index),
-            offset: const Offset(0.04, 0),
-            child: SizedBox(
-              width: 176,
-              child: PresetCard(
-                key: Key('homeTemplateCard-${template.id}'),
-                template: template,
-                compact: true,
-                recommended: index == 0,
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  AppRoutes.templateDetail,
-                  arguments: TemplateDetailArgs(template: template),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+      ),
+      const Spacer(),
+      if (action != null) TextButton(onPressed: onAction, child: Text(action!)),
+    ],
+  );
+}
+
+class _PresetPreviewCard extends StatelessWidget {
+  const _PresetPreviewCard({
+    required this.preset,
+    required this.busy,
+    required this.onTap,
+  });
+  final PhotoPreset preset;
+  final bool busy;
+  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: '${preset.name} 프리셋으로 사진 선택',
+    child: GestureDetector(
+      onTap: busy ? null : onTap,
+      child: SizedBox(
+        width: 126,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColorFiltered(
+                      colorFilter: isMonochromePreview(preset)
+                          ? const ColorFilter.matrix(<double>[
+                              .33,
+                              .33,
+                              .33,
+                              0,
+                              0,
+                              .33,
+                              .33,
+                              .33,
+                              0,
+                              0,
+                              .33,
+                              .33,
+                              .33,
+                              0,
+                              0,
+                              0,
+                              0,
+                              0,
+                              1,
+                              0,
+                            ])
+                          : const ColorFilter.mode(
+                              Colors.transparent,
+                              BlendMode.dst,
+                            ),
+                      child: Image.asset(
+                        presetPreviewAsset(preset),
+                        fit: BoxFit.cover,
+                        semanticLabel: '${preset.name} 프리셋 적용 예시',
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Color(preset.swatch).withValues(alpha: .18),
+                      ),
+                    ),
+                    if (preset.category == PresetCategory.japanTravel)
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: const Color(0x22000000),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Align(
+                        alignment: Alignment.bottomLeft,
+                        child: Text(
+                          preset.category.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CategoryEntryRail extends StatelessWidget {
-  const _CategoryEntryRail({required this.categories});
-
-  final List<String> categories;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      key: const Key('homeCategoryEntryRail'),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.line),
-          bottom: BorderSide(color: AppColors.line),
+            const SizedBox(height: 8),
+            Text(
+              preset.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: categories.indexed
-              .map(
-                (entry) => MotionIn(
-                  delay: Duration(milliseconds: 24 * entry.$1),
-                  child: CategoryChip(
-                    label: entry.$2,
-                    selected: false,
-                    onTap: () => Navigator.pushNamed(
-                      context,
-                      AppRoutes.templates,
-                      arguments: TemplateLibraryArgs(initialCategory: entry.$2),
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-  }
-}
-
-class _HomeBottomNav extends StatelessWidget {
-  const _HomeBottomNav();
-
-  @override
-  Widget build(BuildContext context) {
-    return EditorActionBar(
-      selectedIndex: 0,
-      onTap: (index) {
-        if (index == 1) Navigator.pushNamed(context, AppRoutes.camera);
-        if (index == 2) Navigator.pushNamed(context, AppRoutes.templates);
-      },
-      actions: const [
-        EditorActionItem(icon: Icons.home_outlined, label: '홈'),
-        EditorActionItem(icon: Icons.camera_alt_outlined, label: '촬영'),
-        EditorActionItem(icon: Icons.auto_awesome_outlined, label: '템플릿'),
-        EditorActionItem(icon: Icons.person_outline, label: '내 사진'),
-      ],
-    );
-  }
+    ),
+  );
 }
