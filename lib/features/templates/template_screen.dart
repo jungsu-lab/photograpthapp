@@ -21,6 +21,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
   final _input = PhotoInputService();
   final _preferences = PresetPreferences();
   PresetCategory? _selectedCategory;
+  bool _showFavorites = false;
   Set<String> _favoriteIds = <String>{};
   bool _isOpening = false;
 
@@ -81,6 +82,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
           (preset) =>
               _selectedCategory == null || preset.category == _selectedCategory,
         )
+        .where((preset) => !_showFavorites || _favoriteIds.contains(preset.id))
         .toList();
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F5),
@@ -121,6 +123,19 @@ class _TemplateScreenState extends State<TemplateScreen> {
                             setState(() => _selectedCategory = null),
                       ),
                       const SizedBox(width: 8),
+                      ChoiceChip(
+                        avatar: Icon(
+                          _showFavorites
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: 16,
+                        ),
+                        label: const Text('즐겨찾기'),
+                        selected: _showFavorites,
+                        onSelected: (selected) =>
+                            setState(() => _showFavorites = selected),
+                      ),
+                      const SizedBox(width: 8),
                       ...PresetCategory.values.map(
                         (category) => Padding(
                           padding: const EdgeInsets.only(right: 8),
@@ -139,31 +154,86 @@ class _TemplateScreenState extends State<TemplateScreen> {
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: .68,
-              ),
-              itemCount: shown.length,
-              itemBuilder: (context, index) {
-                final preset = shown[index];
-                return _PresetLibraryCard(
-                  preset: preset,
-                  favorite: _favoriteIds.contains(preset.id),
-                  busy: _isOpening,
-                  onOpen: () => _choosePhotoForPreset(preset),
-                  onFavorite: () => _toggleFavorite(preset.id),
-                );
-              },
-            ),
+            child: shown.isEmpty
+                ? _EmptyPresetState(
+                    favoritesOnly: _showFavorites,
+                    onClearFavoriteFilter: () =>
+                        setState(() => _showFavorites = false),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: .68,
+                        ),
+                    itemCount: shown.length,
+                    itemBuilder: (context, index) {
+                      final preset = shown[index];
+                      return _PresetLibraryCard(
+                        preset: preset,
+                        favorite: _favoriteIds.contains(preset.id),
+                        busy: _isOpening,
+                        onOpen: () => _choosePhotoForPreset(preset),
+                        onFavorite: () => _toggleFavorite(preset.id),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
     );
   }
+}
+
+class _EmptyPresetState extends StatelessWidget {
+  const _EmptyPresetState({
+    required this.favoritesOnly,
+    required this.onClearFavoriteFilter,
+  });
+
+  final bool favoritesOnly;
+  final VoidCallback onClearFavoriteFilter;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            favoritesOnly ? Icons.favorite_border : Icons.auto_awesome_outlined,
+            size: 34,
+            color: const Color(0xFF777777),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            favoritesOnly ? '즐겨찾는 프리셋이 아직 없어요.' : '이 조건에 맞는 프리셋이 없어요.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            favoritesOnly
+                ? '프리셋 카드의 하트를 눌러 빠르게 다시 찾아보세요.'
+                : '다른 카테고리를 선택해 보세요.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF666666), height: 1.35),
+          ),
+          if (favoritesOnly) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: onClearFavoriteFilter,
+              child: const Text('모든 프리셋 보기'),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
 }
 
 class _PresetLibraryCard extends StatelessWidget {
