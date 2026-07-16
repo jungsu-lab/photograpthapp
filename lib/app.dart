@@ -3,8 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/router/app_routes.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/home_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
+import 'features/shell/framefit_shell.dart';
 
 class FrameFitApp extends StatefulWidget {
   const FrameFitApp({super.key});
@@ -47,7 +47,7 @@ class _FrameFitAppState extends State<FrameFitApp> {
   Widget build(BuildContext context) {
     final home = switch (_onboardingComplete) {
       null => const _LoadingScreen(),
-      true => const HomeScreen(),
+      true => const FrameFitShell(),
       false => OnboardingScreen(onCompleted: _finishOnboarding),
     };
     return MaterialApp(

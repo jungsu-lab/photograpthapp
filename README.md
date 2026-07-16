@@ -9,8 +9,8 @@ then save or share a new file.
 
 - Choose a real JPEG or PNG from the system photo picker.
 - Capture a photo with the in-app front or rear camera.
-- Apply 12 numeric presets across Basic correction, Japan travel, Camera
-  effects, and Monochrome categories.
+- Apply 15 numeric presets across Basic correction, Japan travel,
+  non-infringing anime mood, Camera effects, and Monochrome categories.
 - Use a 0–100 preset strength slider; values are interpolated from the
   original settings and strength 0 is visually unchanged.
 - Make local exposure, contrast, highlights, shadows, saturation, vibrance,
@@ -21,6 +21,13 @@ then save or share a new file.
   transparency for PNG input; save to the FrameFit album or open the system
   share sheet.
 - Keep favourites and recent preset use on-device. No account is required.
+- Browse 20 capture-composition templates for portraits, space, mood, and
+  food/product shots. Four quick Shot Packs connect a composition template to
+  a suggested edit preset.
+- Use selected templates to prefer the matching front/rear/ultra-wide camera,
+  apply a real flash setting when available, and display the corresponding
+  camera overlay. Level and top-down templates use on-device accelerometer
+  input only while the camera is open.
 
 ## Intentional MVP limits
 
@@ -28,8 +35,9 @@ then save or share a new file.
   face-aware retouching, object detection, selective masks, perspective
   correction, RAW editing, batch editing, cloud sync, analytics, or AI image
   generation.
-- Camera guidance is a simple rule-based overlay, not real-time composition
-  analysis or a composition score.
+- Camera coaching provides visual overlays, device-level feedback, and camera
+  settings only. It does not claim to detect faces, objects, scene quality, or
+  calculate a composition score.
 - HEIC is not currently accepted by the local processor. Convert it to JPEG or
   PNG before editing.
 
@@ -58,7 +66,10 @@ flutter run
 
 For Android, use JDK 17 or later and enable Windows Developer Mode when the
 Flutter tooling requests plugin symlink support. The in-app camera supports
-Android 7.0 (API 24) or later.
+Android 7.0 (API 24) or later. On Windows accounts with a non-ASCII user path,
+native Android builds may also require an ASCII-only temporary checkout and
+`PUB_CACHE` path; this is a local build-environment workaround, not an app
+runtime requirement.
 
 To make a small Android release APK for each CPU type:
 
@@ -81,8 +92,9 @@ in [docs/MVP_STATUS.md](docs/MVP_STATUS.md).
 ```text
 lib/
   data/presets/       Built-in numeric preset catalogue
+  data/composition/   Capture-template and Shot Pack catalogue
   domain/models/      Photo, preset, and edit-setting data models
-  features/           Onboarding, Home, library, camera, and editor screens
+  features/           Onboarding, Home, preset library, shooting, camera, and editor screens
   services/           Input, processing, export, preferences, and settings
   core/               Routing, theme, and shared UI
 test/                 Preset, processor, and UI-flow tests

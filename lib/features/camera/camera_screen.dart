@@ -1,14 +1,23 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/router/app_routes.dart';
+import '../../data/presets/preset_catalog.dart';
+import '../../domain/models/composition_template.dart';
+import '../../domain/models/photo_preset.dart';
 import '../../domain/models/selected_photo.dart';
-import '../../services/photo_input_service.dart';
 import '../../services/device_settings_service.dart';
+import '../../services/device_pose_service.dart';
+import '../../services/photo_input_service.dart';
 import '../editor/editor_screen.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key});
+  const CameraScreen({super.key, this.template, this.initialPresetId});
+
+  final CompositionTemplate? template;
+  final String? initialPresetId;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -18,13 +27,17 @@ class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
   final _photoInput = PhotoInputService();
   final _deviceSettings = const PlatformDeviceSettingsService();
+  final DevicePoseService _devicePose = const PlatformDevicePoseService();
   CameraController? _controller;
+  StreamSubscription<DevicePoseReading>? _poseSubscription;
   List<CameraDescription> _cameras = const [];
   bool _isInitializing = true;
   bool _isCapturing = false;
   String? _cameraError;
   bool _cameraPermissionLocked = false;
   String _mode = '인물';
+  FlashMode _flashMode = FlashMode.off;
+  DevicePoseGuidance? _poseGuidance;
 
   static const _modes = ['인물', '셀카', '음식', '여행', '상품', '감성'];
 
@@ -32,12 +45,15 @@ class _CameraScreenState extends State<CameraScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _mode = widget.template?.name ?? _mode;
+    _startPoseCoaching();
     _initializeCamera();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _poseSubscription?.cancel();
     _controller?.dispose();
     super.dispose();
   }
@@ -65,12 +81,7 @@ class _CameraScreenState extends State<CameraScreen>
       if (_cameras.isEmpty) {
         throw CameraException('no-camera', '사용 가능한 카메라가 없어요.');
       }
-      final camera =
-          preferred ??
-          _cameras.firstWhere(
-            (item) => item.lensDirection == CameraLensDirection.back,
-            orElse: () => _cameras.first,
-          );
+      final camera = preferred ?? _preferredCamera();
       final next = CameraController(
         camera,
         ResolutionPreset.high,
@@ -78,6 +89,7 @@ class _CameraScreenState extends State<CameraScreen>
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
       await next.initialize();
+      await _applyTemplateCameraSettings(next);
       final old = _controller;
       if (!mounted) {
         await next.dispose();
@@ -104,6 +116,72 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
+  CameraDescription _preferredCamera() {
+    final template = widget.template;
+    var candidates = _cameras;
+    if (template?.cameraFacing == CameraFacingPreference.front) {
+      candidates = candidates
+          .where((item) => item.lensDirection == CameraLensDirection.front)
+          .toList();
+    } else if (template?.cameraFacing == CameraFacingPreference.back) {
+      candidates = candidates
+          .where((item) => item.lensDirection == CameraLensDirection.back)
+          .toList();
+    }
+    if (candidates.isEmpty) candidates = _cameras;
+    if (template?.lensPreference == LensPreference.ultraWide) {
+      final ultraWide = candidates.where(
+        (item) => item.lensType == CameraLensType.ultraWide,
+      );
+      if (ultraWide.isNotEmpty) return ultraWide.first;
+    }
+    return candidates.first;
+  }
+
+  Future<void> _applyTemplateCameraSettings(CameraController controller) async {
+    final requestedMode = widget.template?.flashPreference == FlashPreference.on
+        ? FlashMode.always
+        : FlashMode.off;
+    try {
+      await controller.setFlashMode(requestedMode);
+      _flashMode = requestedMode;
+    } on CameraException {
+      // Some lenses do not provide a flash. The capture flow remains usable.
+      _flashMode = FlashMode.off;
+    }
+  }
+
+  void _startPoseCoaching() {
+    final target = widget.template?.devicePoseTarget;
+    if (target == null ||
+        !(widget.template?.capabilities.contains(CoachCapability.sensor) ??
+            false)) {
+      return;
+    }
+    _poseSubscription = _devicePose.readings.listen(
+      (reading) {
+        final guidance = guidanceForPose(
+          reading,
+          targetRollDegrees: target.targetRollDegrees,
+          rollToleranceDegrees: target.rollToleranceDegrees,
+          targetFlatnessDegrees: target.targetPitchDegrees,
+          flatnessToleranceDegrees: target.pitchToleranceDegrees,
+        );
+        if (mounted) setState(() => _poseGuidance = guidance);
+      },
+      onError: (_) {
+        if (mounted) {
+          setState(
+            () => _poseGuidance = const DevicePoseGuidance(
+              message: '이 기기에서는 수평 안내를 사용할 수 없어요.',
+              isAligned: false,
+            ),
+          );
+        }
+      },
+    );
+  }
+
   Future<void> _capture() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized || _isCapturing) {
@@ -123,6 +201,7 @@ class _CameraScreenState extends State<CameraScreen>
             bytes: bytes,
             source: PhotoSource.camera,
           ),
+          initialPreset: _recommendedPreset,
         ),
       );
     } on CameraException catch (error) {
@@ -132,6 +211,18 @@ class _CameraScreenState extends State<CameraScreen>
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
+  }
+
+  PhotoPreset? get _recommendedPreset {
+    final linkedIds = widget.template?.linkedPresetIds;
+    final presetId =
+        widget.initialPresetId ??
+        (linkedIds == null || linkedIds.isEmpty ? null : linkedIds.first);
+    if (presetId == null) return null;
+    for (final preset in presetCatalog) {
+      if (preset.id == presetId) return preset;
+    }
+    return null;
   }
 
   Future<void> _openGallery() async {
@@ -156,6 +247,20 @@ class _CameraScreenState extends State<CameraScreen>
       orElse: () => _cameras.first,
     );
     await _initializeCamera(preferred: next);
+  }
+
+  Future<void> _toggleFlash() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    final nextMode = _flashMode == FlashMode.off
+        ? FlashMode.always
+        : FlashMode.off;
+    try {
+      await controller.setFlashMode(nextMode);
+      if (mounted) setState(() => _flashMode = nextMode);
+    } on CameraException {
+      if (mounted) _message('현재 카메라에서는 플래시를 사용할 수 없어요.');
+    }
   }
 
   Future<void> _openAppSettings() async {
@@ -236,41 +341,84 @@ class _CameraScreenState extends State<CameraScreen>
                   fit: StackFit.expand,
                   children: [
                     _buildPreview(),
-                    const IgnorePointer(child: _CompositionOverlay()),
+                    IgnorePointer(
+                      child: _CompositionOverlay(template: widget.template),
+                    ),
+                    if (_poseGuidance != null)
+                      Positioned(
+                        top: 14,
+                        left: 14,
+                        right: 14,
+                        child: _PoseCaption(guidance: _poseGuidance!),
+                      ),
                     Positioned(
                       left: 14,
                       right: 14,
                       bottom: 14,
-                      child: _GuideCaption(mode: _mode),
+                      child: _GuideCaption(
+                        mode: _mode,
+                        template: widget.template,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          SizedBox(
-            height: 58,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              scrollDirection: Axis.horizontal,
-              itemCount: _modes.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 20),
-              itemBuilder: (context, index) {
-                final mode = _modes[index];
-                final selected = mode == _mode;
-                return GestureDetector(
-                  onTap: () => setState(() => _mode = mode),
-                  child: Text(
-                    mode,
-                    style: TextStyle(
-                      color: selected ? Colors.white : const Color(0xFF9D9D9D),
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+          if (widget.template == null)
+            SizedBox(
+              height: 58,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
+                scrollDirection: Axis.horizontal,
+                itemCount: _modes.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 20),
+                itemBuilder: (context, index) {
+                  final mode = _modes[index];
+                  final selected = mode == _mode;
+                  return GestureDetector(
+                    onTap: () => setState(() => _mode = mode),
+                    child: Text(
+                      mode,
+                      style: TextStyle(
+                        color: selected
+                            ? Colors.white
+                            : const Color(0xFF9D9D9D),
+                        fontWeight: selected
+                            ? FontWeight.w800
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 6),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.grid_view_rounded,
+                    color: Color(0xFFF1D591),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${widget.template!.name} 가이드 적용 중',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(28, 4, 28, 18),
             child: Row(
@@ -304,7 +452,19 @@ class _CameraScreenState extends State<CameraScreen>
                         : const Icon(Icons.camera_alt_outlined, size: 32),
                   ),
                 ),
-                const SizedBox(width: 48),
+                IconButton(
+                  tooltip: _flashMode == FlashMode.off ? '플래시 켜기' : '플래시 끄기',
+                  onPressed: _toggleFlash,
+                  icon: Icon(
+                    _flashMode == FlashMode.off
+                        ? Icons.flash_off_outlined
+                        : Icons.flash_on_rounded,
+                    color: _flashMode == FlashMode.off
+                        ? Colors.white
+                        : const Color(0xFFF1D591),
+                    size: 28,
+                  ),
+                ),
               ],
             ),
           ),
@@ -338,39 +498,117 @@ class _CameraScreenState extends State<CameraScreen>
 }
 
 class _CompositionOverlay extends StatelessWidget {
-  const _CompositionOverlay();
+  const _CompositionOverlay({this.template});
+
+  final CompositionTemplate? template;
 
   @override
-  Widget build(BuildContext context) => CustomPaint(painter: _GridPainter());
+  Widget build(BuildContext context) =>
+      CustomPaint(painter: _GridPainter(template?.overlay));
 }
 
 class _GridPainter extends CustomPainter {
+  const _GridPainter(this.overlay);
+
+  final OverlaySpec? overlay;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: .32)
       ..strokeWidth = 1;
-    for (var i = 1; i <= 2; i++) {
+    final type = overlay?.type ?? CompositionOverlayType.thirds;
+    if (type == CompositionOverlayType.thirds) {
+      for (var i = 1; i <= 2; i++) {
+        canvas.drawLine(
+          Offset(size.width * i / 3, 0),
+          Offset(size.width * i / 3, size.height),
+          paint,
+        );
+        canvas.drawLine(
+          Offset(0, size.height * i / 3),
+          Offset(size.width, size.height * i / 3),
+          paint,
+        );
+      }
+    } else if (type == CompositionOverlayType.centre ||
+        type == CompositionOverlayType.reflection) {
       canvas.drawLine(
-        Offset(size.width * i / 3, 0),
-        Offset(size.width * i / 3, size.height),
+        Offset(size.width / 2, 0),
+        Offset(size.width / 2, size.height),
         paint,
       );
       canvas.drawLine(
-        Offset(0, size.height * i / 3),
-        Offset(size.width, size.height * i / 3),
+        Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2),
         paint,
+      );
+      canvas.drawCircle(
+        Offset(size.width / 2, size.height / 2),
+        size.shortestSide * .18,
+        paint..style = PaintingStyle.stroke,
+      );
+    } else if (type == CompositionOverlayType.topDown) {
+      canvas.drawLine(
+        Offset(size.width / 2, 0),
+        Offset(size.width / 2, size.height),
+        paint,
+      );
+      canvas.drawLine(
+        Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2),
+        paint,
+      );
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: Offset(size.width / 2, size.height / 2),
+          width: size.width * .58,
+          height: size.height * .42,
+        ),
+        paint..style = PaintingStyle.stroke,
+      );
+    } else if (type == CompositionOverlayType.leadingLines) {
+      for (final line in overlay?.lines ?? const <NormalizedLine>[]) {
+        canvas.drawLine(
+          Offset(line.start.x * size.width, line.start.y * size.height),
+          Offset(line.end.x * size.width, line.end.y * size.height),
+          paint..color = const Color(0xFFF1D591).withValues(alpha: .72),
+        );
+      }
+    } else if (type == CompositionOverlayType.frame) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            size.width * .15,
+            size.height * .16,
+            size.width * .7,
+            size.height * .68,
+          ),
+          const Radius.circular(12),
+        ),
+        paint..style = PaintingStyle.stroke,
+      );
+    } else {
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(size.width / 2, size.height * .52),
+          width: size.width * .46,
+          height: size.height * .72,
+        ),
+        paint..style = PaintingStyle.stroke,
       );
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridPainter oldDelegate) =>
+      oldDelegate.overlay != overlay;
 }
 
 class _GuideCaption extends StatelessWidget {
-  const _GuideCaption({required this.mode});
+  const _GuideCaption({required this.mode, this.template});
   final String mode;
+  final CompositionTemplate? template;
 
   @override
   Widget build(BuildContext context) => DecoratedBox(
@@ -387,14 +625,68 @@ class _GuideCaption extends StatelessWidget {
     ),
   );
 
-  String get _copy => switch (mode) {
-    '인물' => '얼굴을 가운데보다 살짝 위에 두고, 배경이 단순한 쪽을 찾아보세요.',
-    '셀카' => '카메라를 눈높이보다 조금 높게 두면 자연스럽게 보여요.',
-    '음식' => '접시 가장자리가 화면에 잘리지 않게 한 걸음 뒤로 가보세요.',
-    '여행' => '수평선을 격자에 맞추고, 하늘 여백을 남겨보세요.',
-    '상품' => '빛이 고르게 닿는 곳에서 제품 주변 여백을 정리해보세요.',
-    _ => '주인공을 한쪽 격자선에 두고 주변 여백을 충분히 남겨보세요.',
-  };
+  String get _copy {
+    final copy = template?.coachingCopy;
+    if (copy != null && copy.isNotEmpty) return copy.first;
+    return switch (mode) {
+      '인물' => '얼굴을 가운데보다 살짝 위에 두고, 배경이 단순한 쪽을 찾아보세요.',
+      '셀카' => '카메라를 눈높이보다 조금 높게 두면 자연스럽게 보여요.',
+      '음식' => '접시 가장자리가 화면에 잘리지 않게 한 걸음 뒤로 가보세요.',
+      '여행' => '수평선을 격자에 맞추고, 하늘 여백을 남겨보세요.',
+      '상품' => '빛이 고르게 닿는 곳에서 제품 주변 여백을 정리해보세요.',
+      _ => '주인공을 한쪽 격자선에 두고 주변 여백을 충분히 남겨보세요.',
+    };
+  }
+}
+
+class _PoseCaption extends StatelessWidget {
+  const _PoseCaption({required this.guidance});
+
+  final DevicePoseGuidance guidance;
+
+  @override
+  Widget build(BuildContext context) => Align(
+    alignment: Alignment.topCenter,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: guidance.isAligned
+            ? const Color(0xCC23513C)
+            : const Color(0xCC111111),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: guidance.isAligned
+              ? const Color(0xFF9DE0B4)
+              : const Color(0xFF777777),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              guidance.isAligned
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.screen_rotation_alt_outlined,
+              size: 16,
+              color: guidance.isAligned
+                  ? const Color(0xFFD2F5DD)
+                  : const Color(0xFFF3F3F3),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              guidance.message,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _CameraState extends StatelessWidget {

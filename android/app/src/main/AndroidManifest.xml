@@ -1,7 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- FrameFit never records audio. Remove the transitive camera plugin
+         permission so users are not asked for access the app does not use. -->
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO"
+        tools:node="remove" />
     <application
-        android:label="framefit"
+        android:label="FrameFit"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

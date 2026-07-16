@@ -32,6 +32,8 @@
 	<string>FrameFit needs access to the photos you choose to edit on this device.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>FrameFit saves edited photos only when you choose Save.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>FrameFit uses device motion only while composition coaching is open, to help you level the camera.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

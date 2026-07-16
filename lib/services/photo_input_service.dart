@@ -13,6 +13,25 @@ class PhotoInputService {
   Future<SelectedPhoto?> takePhoto() =>
       _pick(ImageSource.camera, PhotoSource.camera);
 
+  /// Android can reclaim the activity while a system picker is open. Restoring
+  /// the lost selection keeps the user from silently losing the photo they
+  /// already chose. Non-Android implementations simply report no recovery.
+  Future<SelectedPhoto?> retrieveLostPhoto() async {
+    LostDataResponse response;
+    try {
+      response = await _picker.retrieveLostData();
+    } on UnimplementedError {
+      return null;
+    }
+    if (response.isEmpty) return null;
+    if (response.exception != null) {
+      throw PhotoInputException('이전에 선택한 사진을 복원하지 못했어요. 다시 선택해 주세요.');
+    }
+    final file = response.file;
+    if (file == null) return null;
+    return _selectedPhotoFromFile(file, PhotoSource.gallery);
+  }
+
   Future<SelectedPhoto?> _pick(
     ImageSource source,
     PhotoSource photoSource,
@@ -23,7 +42,13 @@ class PhotoInputService {
       requestFullMetadata: false,
     );
     if (file == null) return null;
+    return _selectedPhotoFromFile(file, photoSource);
+  }
 
+  Future<SelectedPhoto> _selectedPhotoFromFile(
+    XFile file,
+    PhotoSource photoSource,
+  ) async {
     final bytes = await file.readAsBytes();
     final format = PhotoInputValidator.validate(
       fileName: file.name,

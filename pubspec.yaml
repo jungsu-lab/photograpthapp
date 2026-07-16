@@ -40,6 +40,7 @@ dependencies:
   share_plus: ^13.2.0
   shared_preferences: ^2.5.5
   app_settings: ^7.0.0
+  sensors_plus: ^7.1.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -73,6 +74,7 @@ flutter:
     - assets/images/preset-portrait-preview.webp
     - assets/images/preset-food-preview.webp
     - assets/images/preset-product-preview.webp
+    - assets/images/composition/kyoto-film-cover.jpg
 
   fonts:
     - family: KimjungchulMyungjo

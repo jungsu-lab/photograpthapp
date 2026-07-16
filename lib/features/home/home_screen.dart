@@ -9,7 +9,10 @@ import '../../services/preset_preferences.dart';
 import '../editor/editor_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onOpenShoot, this.onOpenEdit});
+
+  final VoidCallback? onOpenShoot;
+  final VoidCallback? onOpenEdit;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -25,6 +28,25 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRecentPresets();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
+  }
+
+  Future<void> _recoverLostPhoto() async {
+    try {
+      final photo = await _input.retrieveLostPhoto();
+      if (!mounted || photo == null) return;
+      await Navigator.pushNamed(
+        context,
+        AppRoutes.editor,
+        arguments: EditorArgs(photo: photo),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이전에 선택한 사진을 복원하지 못했어요. 다시 선택해 주세요.')),
+        );
+      }
+    }
   }
 
   Future<void> _loadRecentPresets() async {
@@ -88,7 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
       actions: [
         IconButton(
           tooltip: '프리셋 보기',
-          onPressed: () => Navigator.pushNamed(context, AppRoutes.templates),
+          onPressed:
+              widget.onOpenEdit ??
+              () => Navigator.pushNamed(context, AppRoutes.templates),
           icon: const Icon(Icons.auto_awesome_outlined),
         ),
       ],
@@ -114,13 +138,17 @@ class _HomeScreenState extends State<HomeScreen> {
           _PhotoEntryCard(
             busy: _openingPhoto,
             onGallery: _startEditor,
-            onCamera: () => Navigator.pushNamed(context, AppRoutes.camera),
+            onCamera:
+                widget.onOpenShoot ??
+                () => Navigator.pushNamed(context, AppRoutes.camera),
           ),
           const SizedBox(height: 30),
           _SectionHeader(
             title: '바로 써보기',
             action: '모두 보기',
-            onAction: () => Navigator.pushNamed(context, AppRoutes.templates),
+            onAction:
+                widget.onOpenEdit ??
+                () => Navigator.pushNamed(context, AppRoutes.templates),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -146,7 +174,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 26),
           TextButton.icon(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.camera),
+            onPressed:
+                widget.onOpenShoot ??
+                () => Navigator.pushNamed(context, AppRoutes.camera),
             icon: const Icon(Icons.grid_view_outlined),
             label: const Text('촬영 전에 구도 코치 열기'),
             style: TextButton.styleFrom(

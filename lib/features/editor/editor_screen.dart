@@ -396,7 +396,7 @@ class _EditorScreenState extends State<EditorScreen> {
                         onTap: () => setState(() => _tab = 0),
                       ),
                       _EditorTab(
-                        label: '조정',
+                        label: '고급 보정',
                         icon: Icons.tune,
                         selected: _tab == 1,
                         onTap: () => setState(() => _tab = 1),
@@ -653,13 +653,21 @@ class _PresetPanel extends StatelessWidget {
   }
 }
 
-class _AdjustPanel extends StatelessWidget {
+class _AdjustPanel extends StatefulWidget {
   const _AdjustPanel({required this.recipe, required this.onChanged});
   final PresetRecipe recipe;
   final ValueChanged<PresetRecipe> onChanged;
 
   @override
+  State<_AdjustPanel> createState() => _AdjustPanelState();
+}
+
+class _AdjustPanelState extends State<_AdjustPanel> {
+  var _selectedGroup = 0;
+
+  @override
   Widget build(BuildContext context) {
+    final recipe = widget.recipe;
     final controls = <_AdjustmentControl>[
       _AdjustmentControl(
         '노출',
@@ -760,37 +768,78 @@ class _AdjustPanel extends StatelessWidget {
         (value) => recipe.copyWith(grain: value),
       ),
     ];
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      scrollDirection: Axis.horizontal,
-      itemCount: controls.length,
-      itemBuilder: (context, index) {
-        final item = controls[index];
-        return SizedBox(
-          width: 170,
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              Text(
-                item.label,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+    final groups = <({String label, List<_AdjustmentControl> controls})>[
+      (label: '빛', controls: controls.sublist(0, 6)),
+      (label: '색', controls: controls.sublist(6, 10)),
+      (label: '질감', controls: controls.sublist(10)),
+    ];
+    final shown = groups[_selectedGroup].controls;
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+          child: Row(
+            children: List.generate(
+              groups.length,
+              (index) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(groups[index].label),
+                  selected: _selectedGroup == index,
+                  selectedColor: const Color(0xFFF1F1F1),
+                  labelStyle: TextStyle(
+                    color: _selectedGroup == index
+                        ? const Color(0xFF111111)
+                        : Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  backgroundColor: const Color(0xFF333333),
+                  side: BorderSide.none,
+                  onSelected: (_) => setState(() => _selectedGroup = index),
+                ),
               ),
-              Slider(
-                value: item.value,
-                min: item.min,
-                max: item.max,
-                activeColor: Colors.white,
-                inactiveColor: const Color(0xFF555555),
-                onChanged: (value) => onChanged(item.update(value)),
-              ),
-              Text(
-                item.value.toStringAsFixed(2),
-                style: const TextStyle(color: Color(0xFFB4B4B4), fontSize: 12),
-              ),
-            ],
+            ),
           ),
-        );
-      },
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: shown.length,
+            itemBuilder: (context, index) {
+              final item = shown[index];
+              return SizedBox(
+                width: 170,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      item.label,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                    Slider(
+                      value: item.value,
+                      min: item.min,
+                      max: item.max,
+                      activeColor: Colors.white,
+                      inactiveColor: const Color(0xFF555555),
+                      onChanged: (value) =>
+                          widget.onChanged(item.update(value)),
+                    ),
+                    Text(
+                      item.value.toStringAsFixed(2),
+                      style: const TextStyle(
+                        color: Color(0xFFB4B4B4),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

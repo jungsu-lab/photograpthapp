@@ -10,6 +10,7 @@ String presetPreviewAsset(PhotoPreset preset) {
   return switch (preset.category) {
     PresetCategory.correction => 'assets/images/preset-portrait-preview.webp',
     PresetCategory.japanTravel => 'assets/images/japan_travel_preview.webp',
+    PresetCategory.animeMood => 'assets/images/japan_travel_preview.webp',
     PresetCategory.cameraEffect => 'assets/images/preset-food-preview.webp',
     PresetCategory.monochrome => 'assets/images/preset-portrait-preview.webp',
   };

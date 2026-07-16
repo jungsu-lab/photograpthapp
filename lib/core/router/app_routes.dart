@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/camera/camera_screen.dart';
 import '../../features/editor/editor_screen.dart';
-import '../../features/home/home_screen.dart';
+import '../../features/shell/framefit_shell.dart';
 import '../../features/templates/template_screen.dart';
 
 class AppRoutes {
@@ -13,11 +13,11 @@ class AppRoutes {
 
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     final builder = switch (settings.name) {
-      home => (_) => const HomeScreen(),
+      home => (_) => const FrameFitShell(),
       camera => (_) => const CameraScreen(),
       templates => (_) => const TemplateScreen(),
       editor => (_) => const EditorScreen(),
-      _ => (_) => const HomeScreen(),
+      _ => (_) => const FrameFitShell(),
     };
 
     return PageRouteBuilder(

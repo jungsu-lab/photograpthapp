@@ -1,11 +1,18 @@
 import 'dart:math' as math;
 
-enum PresetCategory { correction, japanTravel, cameraEffect, monochrome }
+enum PresetCategory {
+  correction,
+  japanTravel,
+  animeMood,
+  cameraEffect,
+  monochrome,
+}
 
 extension PresetCategoryLabel on PresetCategory {
   String get label => switch (this) {
     PresetCategory.correction => '기본 보정',
     PresetCategory.japanTravel => '일본 여행',
+    PresetCategory.animeMood => '애니 무드',
     PresetCategory.cameraEffect => '촬영 효과',
     PresetCategory.monochrome => '흑백',
   };
