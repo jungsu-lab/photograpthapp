@@ -10,6 +10,7 @@
          FrameFit must not request broad legacy storage read access. -->
     <uses-permission
         android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
         tools:node="remove" />
     <application
         android:label="FrameFit"
