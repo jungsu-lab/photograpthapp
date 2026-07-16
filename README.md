@@ -60,6 +60,9 @@ then save or share a new file.
 - Do not commit real photos, `.env` files, signing keys, certificates, or
   service-account files.
 
+The contributor-facing [security and privacy checklist](docs/SECURITY.md)
+records the rules for future work and release handling.
+
 ## Run and verify
 
 ```bash

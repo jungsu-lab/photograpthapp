@@ -53,8 +53,23 @@ app.*.map.json
 *.jks
 *.keystore
 *.p12
+*.p8
+*.pem
+*.key
+*.der
+*.cer
+*.crt
 *.mobileprovision
+android/key.properties
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+service-account*.json
+firebase-adminsdk*.json
+secrets.*
 /test/private_photos/
+/test/fixtures/private/
+/assets/private_photos/
+/assets/local_photos/
 /docs/private_screenshots/
 
 # Lossless source copies used only while preparing bundled WebP thumbnails.
