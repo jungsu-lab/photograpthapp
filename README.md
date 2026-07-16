@@ -119,3 +119,6 @@ colour, fade, vignette, deterministic grain, sharpness, clamping, and
 encoding. Preview uses a reduced proxy; export renders again from the original
 resolution. See [lib/domain/models/photo_preset.dart](lib/domain/models/photo_preset.dart)
 and [lib/services/photo_processor.dart](lib/services/photo_processor.dart).
+
+The complete numeric ranges, intensity contract, and safe preset-authoring
+rules are in [docs/PRESET_SCHEMA.md](docs/PRESET_SCHEMA.md).
