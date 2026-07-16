@@ -6,12 +6,6 @@
     <uses-permission
         android:name="android.permission.RECORD_AUDIO"
         tools:node="remove" />
-    <!-- The system picker grants access only to the image the user chose, so
-         FrameFit must not request broad legacy storage read access. -->
-    <uses-permission
-        android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28"
-        tools:node="remove" />
     <application
         android:label="FrameFit"
         android:name="${applicationName}"
