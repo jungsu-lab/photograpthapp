@@ -1,6 +1,6 @@
 import 'package:framefit/data/presets/preset_catalog.dart';
 import 'package:framefit/domain/models/photo_preset.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 void main() {
   test('preset library offers distinct, valid beginner and mood choices', () {

@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 import 'package:framefit/data/composition/composition_catalog.dart';
 import 'package:framefit/data/presets/preset_catalog.dart';
 import 'package:framefit/domain/models/composition_template.dart';
