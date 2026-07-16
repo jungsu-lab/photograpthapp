@@ -6,10 +6,11 @@
   v2 signature was verified.
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
-- The complete `flutter analyze` and Flutter widget-test commands have not
-  been marked as passed for this workstation: the local Flutter test runtime
-  can stall while creating its isolate. Re-run the full commands on a clean
-  Flutter host or CI before declaring the entire suite green.
+- On 2026-07-17, `flutter analyze` completed with no issues and
+  `flutter test --concurrency=1` completed with 37 passing tests. Both ran
+  from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
+  set to ASCII paths; the default Unicode Windows user path can stall Flutter
+  test compilation on this workstation.
 - A local x64 debug APK was built successfully on 2026-07-17. Its emulator
   image did not finish starting Android's package and window services, so no
   emulator installation or interactive-flow result is claimed from that run.
@@ -17,8 +18,6 @@
   debouncing was added. Its SHA-256 is
   `A1518D6B8564DEB0E97EE4B5F262D10E34A311016FBE8382D78AC40065EFBC2C`,
   and its Android APK Signature Scheme v2 signature verified successfully.
-- The dedicated Flutter widget-test runner still stalls on this workstation,
-  so the new undo/redo widget test is committed but is not reported as passed.
 
 갱신일: 2026-07-16
 
