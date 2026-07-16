@@ -50,6 +50,7 @@ class _EditorScreenState extends State<EditorScreen> {
   bool _isExporting = false;
   int _tab = 0;
   int _requestId = 0;
+  Timer? _previewDebounce;
   final EditHistory<EditSettings> _history = EditHistory<EditSettings>();
   final Map<String, Future<Uint8List>> _presetThumbnails = {};
   Set<String> _favoriteIds = <String>{};
@@ -124,7 +125,25 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   Future<void> _renderPreview() async {
+    _previewDebounce?.cancel();
     final requestId = ++_requestId;
+    await _renderPreviewRequest(requestId);
+  }
+
+  void _schedulePreview() {
+    _previewDebounce?.cancel();
+    final requestId = ++_requestId;
+    setState(() {
+      _isProcessing = true;
+      _error = null;
+    });
+    _previewDebounce = Timer(const Duration(milliseconds: 140), () {
+      unawaited(_renderPreviewRequest(requestId));
+    });
+  }
+
+  Future<void> _renderPreviewRequest(int requestId) async {
+    if (!mounted || requestId != _requestId) return;
     setState(() {
       _isProcessing = true;
       _error = null;
@@ -164,7 +183,7 @@ class _EditorScreenState extends State<EditorScreen> {
     if (settings.preset != null && settings.preset!.id != priorPreset) {
       _presetPreferences.recordUse(settings.preset!.id);
     }
-    _renderPreview();
+    _schedulePreview();
   }
 
   bool _sameSettings(EditSettings left, EditSettings right) =>
@@ -183,6 +202,12 @@ class _EditorScreenState extends State<EditorScreen> {
     final next = _history.redo(_settings);
     if (next == null) return;
     _changeSettings(next, addToHistory: false);
+  }
+
+  @override
+  void dispose() {
+    _previewDebounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _prepareExport() async {

@@ -173,4 +173,43 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<IconButton>(reset).onPressed, isNull);
   });
+
+  testWidgets('a changed edit state debounces the preview before export', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(presetCatalog.first.name).last);
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('exportButton')))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.pump(const Duration(milliseconds: 160));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextButton>(find.byKey(const Key('exportButton')))
+          .onPressed,
+      isNotNull,
+    );
+  });
 }
