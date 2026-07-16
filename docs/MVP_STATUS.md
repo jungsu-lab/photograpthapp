@@ -13,9 +13,9 @@
 - A local x64 debug APK was built successfully on 2026-07-17. Its emulator
   image did not finish starting Android's package and window services, so no
   emulator installation or interactive-flow result is claimed from that run.
-- The current ARM64 APK was rebuilt successfully after the editor undo/redo
-  coverage update. Its SHA-256 is
-  `8C02AF50F9AD8432CEF1E58C1AEACB11E1944E64ECE106912201411AA0AB5229`,
+- The current ARM64 APK was rebuilt successfully after the editor history
+  refactor. Its SHA-256 is
+  `2FD74E915A0CD591D90EC75CB9E842A891A32FAEA12C8F8C96B55C4B5AA56DC8`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 - The dedicated Flutter widget-test runner still stalls on this workstation,
   so the new undo/redo widget test is committed but is not reported as passed.
