@@ -5,10 +5,12 @@ class OnboardingScreen extends StatelessWidget {
     super.key,
     required this.onCompleted,
     required this.onImport,
+    required this.onCamera,
   });
 
   final Future<void> Function() onCompleted;
   final Future<void> Function() onImport;
+  final Future<void> Function() onCamera;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -102,6 +104,18 @@ class OnboardingScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('onboardingCameraCta'),
+              onPressed: onCamera,
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: const Text('카메라로 촬영'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                foregroundColor: const Color(0xFF151515),
+                side: const BorderSide(color: Color(0xFFB7B4AF)),
+              ),
+            ),
+            const SizedBox(height: 4),
             TextButton(
               onPressed: onCompleted,
               child: const Center(child: Text('둘러보기 건너뛰기')),

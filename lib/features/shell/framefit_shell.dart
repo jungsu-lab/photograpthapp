@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../../core/router/app_routes.dart';
 import '../home/home_screen.dart';
 import '../shooting/shooting_library_screen.dart';
 import '../templates/template_screen.dart';
 
 class FrameFitShell extends StatefulWidget {
-  const FrameFitShell({super.key, this.openPhotoPickerOnStart = false});
+  const FrameFitShell({
+    super.key,
+    this.openPhotoPickerOnStart = false,
+    this.openCameraOnStart = false,
+  });
 
   final bool openPhotoPickerOnStart;
+  final bool openCameraOnStart;
 
   @override
   State<FrameFitShell> createState() => _FrameFitShellState();
@@ -15,6 +21,19 @@ class FrameFitShell extends StatefulWidget {
 
 class _FrameFitShellState extends State<FrameFitShell> {
   var _index = 0;
+  var _openedInitialCamera = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.openCameraOnStart) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _openedInitialCamera) return;
+        _openedInitialCamera = true;
+        Navigator.of(context).pushNamed(AppRoutes.camera);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(

@@ -17,6 +17,7 @@ void main() {
           onCompleted: () async {
             completed = true;
           },
+          onCamera: () async {},
         ),
       ),
     );
@@ -26,5 +27,26 @@ void main() {
 
     expect(imported, isTrue);
     expect(completed, isFalse);
+  });
+
+  testWidgets('secondary onboarding action starts camera', (tester) async {
+    var openedCamera = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: OnboardingScreen(
+          onImport: () async {},
+          onCompleted: () async {},
+          onCamera: () async {
+            openedCamera = true;
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('onboardingCameraCta')));
+    await tester.pump();
+
+    expect(openedCamera, isTrue);
   });
 }

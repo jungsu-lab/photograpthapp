@@ -17,6 +17,7 @@ class _FrameFitAppState extends State<FrameFitApp> {
   static const _onboardingKey = 'onboarding-complete-v1';
   bool? _onboardingComplete;
   bool _openPhotoPickerAfterOnboarding = false;
+  bool _openCameraAfterOnboarding = false;
 
   @override
   void initState() {
@@ -38,13 +39,17 @@ class _FrameFitAppState extends State<FrameFitApp> {
     }
   }
 
-  Future<void> _finishOnboarding({bool openPhotoPicker = false}) async {
+  Future<void> _finishOnboarding({
+    bool openPhotoPicker = false,
+    bool openCamera = false,
+  }) async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_onboardingKey, true);
     if (mounted) {
       setState(() {
         _onboardingComplete = true;
         _openPhotoPickerAfterOnboarding = openPhotoPicker;
+        _openCameraAfterOnboarding = openCamera;
       });
     }
   }
@@ -55,10 +60,12 @@ class _FrameFitAppState extends State<FrameFitApp> {
       null => const _LoadingScreen(),
       true => FrameFitShell(
         openPhotoPickerOnStart: _openPhotoPickerAfterOnboarding,
+        openCameraOnStart: _openCameraAfterOnboarding,
       ),
       false => OnboardingScreen(
         onCompleted: _finishOnboarding,
         onImport: () => _finishOnboarding(openPhotoPicker: true),
+        onCamera: () => _finishOnboarding(openCamera: true),
       ),
     };
     return MaterialApp(

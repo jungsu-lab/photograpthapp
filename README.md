@@ -9,6 +9,8 @@ then save or share a new file.
 
 - Choose a real JPEG or PNG from the system photo picker.
 - Capture a photo with the in-app front or rear camera.
+- Start either route directly from onboarding; permissions are requested only
+  after the chosen action.
 - Apply 15 numeric presets across Basic correction, Japan travel,
   non-infringing anime mood, Camera effects, and Monochrome categories.
 - Use a 0–100 preset strength slider; values are interpolated from the
