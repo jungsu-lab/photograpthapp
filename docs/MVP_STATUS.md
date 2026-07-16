@@ -4,8 +4,8 @@
 
 - The ARM64 release APK was rebuilt successfully and its APK Signature Scheme
   v2 signature was verified.
-- Preset model, preset catalogue, and composition catalogue tests passed using
-  the standalone Dart test runner.
+- Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
+  processor tests passed using the standalone Dart test runner.
 - The complete `flutter analyze` and Flutter widget-test commands have not
   been marked as passed for this workstation: the local Flutter test runtime
   can stall while creating its isolate. Re-run the full commands on a clean
