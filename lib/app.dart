@@ -16,6 +16,7 @@ class FrameFitApp extends StatefulWidget {
 class _FrameFitAppState extends State<FrameFitApp> {
   static const _onboardingKey = 'onboarding-complete-v1';
   bool? _onboardingComplete;
+  bool _openPhotoPickerAfterOnboarding = false;
 
   @override
   void initState() {
@@ -37,18 +38,28 @@ class _FrameFitAppState extends State<FrameFitApp> {
     }
   }
 
-  Future<void> _finishOnboarding() async {
+  Future<void> _finishOnboarding({bool openPhotoPicker = false}) async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(_onboardingKey, true);
-    if (mounted) setState(() => _onboardingComplete = true);
+    if (mounted) {
+      setState(() {
+        _onboardingComplete = true;
+        _openPhotoPickerAfterOnboarding = openPhotoPicker;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final home = switch (_onboardingComplete) {
       null => const _LoadingScreen(),
-      true => const FrameFitShell(),
-      false => OnboardingScreen(onCompleted: _finishOnboarding),
+      true => FrameFitShell(
+        openPhotoPickerOnStart: _openPhotoPickerAfterOnboarding,
+      ),
+      false => OnboardingScreen(
+        onCompleted: _finishOnboarding,
+        onImport: () => _finishOnboarding(openPhotoPicker: true),
+      ),
     };
     return MaterialApp(
       title: 'FrameFit',

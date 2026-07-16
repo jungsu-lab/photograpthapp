@@ -5,7 +5,9 @@ import '../shooting/shooting_library_screen.dart';
 import '../templates/template_screen.dart';
 
 class FrameFitShell extends StatefulWidget {
-  const FrameFitShell({super.key});
+  const FrameFitShell({super.key, this.openPhotoPickerOnStart = false});
+
+  final bool openPhotoPickerOnStart;
 
   @override
   State<FrameFitShell> createState() => _FrameFitShellState();
@@ -20,6 +22,7 @@ class _FrameFitShellState extends State<FrameFitShell> {
       index: _index,
       children: [
         HomeScreen(
+          autoOpenPicker: widget.openPhotoPickerOnStart,
           onOpenShoot: () => setState(() => _index = 1),
           onOpenEdit: () => setState(() => _index = 2),
         ),

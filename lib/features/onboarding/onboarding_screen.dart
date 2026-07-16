@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key, required this.onCompleted});
+  const OnboardingScreen({
+    super.key,
+    required this.onCompleted,
+    required this.onImport,
+  });
 
   final Future<void> Function() onCompleted;
+  final Future<void> Function() onImport;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -87,7 +92,7 @@ class OnboardingScreen extends StatelessWidget {
             const Spacer(),
             FilledButton.icon(
               key: const Key('onboardingPrimaryCta'),
-              onPressed: onCompleted,
+              onPressed: onImport,
               icon: const Icon(Icons.photo_library_outlined),
               label: const Text('사진 편집 시작하기'),
               style: FilledButton.styleFrom(

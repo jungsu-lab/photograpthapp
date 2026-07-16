@@ -9,10 +9,16 @@ import '../../services/preset_preferences.dart';
 import '../editor/editor_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, this.onOpenShoot, this.onOpenEdit});
+  const HomeScreen({
+    super.key,
+    this.onOpenShoot,
+    this.onOpenEdit,
+    this.autoOpenPicker = false,
+  });
 
   final VoidCallback? onOpenShoot;
   final VoidCallback? onOpenEdit;
+  final bool autoOpenPicker;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -28,24 +34,31 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRecentPresets();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _recoverLostPhoto());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final recovered = await _recoverLostPhoto();
+      if (!recovered && widget.autoOpenPicker && mounted) {
+        await _startEditor();
+      }
+    });
   }
 
-  Future<void> _recoverLostPhoto() async {
+  Future<bool> _recoverLostPhoto() async {
     try {
       final photo = await _input.retrieveLostPhoto();
-      if (!mounted || photo == null) return;
+      if (!mounted || photo == null) return false;
       await Navigator.pushNamed(
         context,
         AppRoutes.editor,
         arguments: EditorArgs(photo: photo),
       );
+      return true;
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('이전에 선택한 사진을 복원하지 못했어요. 다시 선택해 주세요.')),
         );
       }
+      return false;
     }
   }
 
