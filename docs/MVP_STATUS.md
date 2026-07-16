@@ -10,6 +10,9 @@
   been marked as passed for this workstation: the local Flutter test runtime
   can stall while creating its isolate. Re-run the full commands on a clean
   Flutter host or CI before declaring the entire suite green.
+- A local x64 debug APK was built successfully on 2026-07-17. Its emulator
+  image did not finish starting Android's package and window services, so no
+  emulator installation or interactive-flow result is claimed from that run.
 
 갱신일: 2026-07-16
 
