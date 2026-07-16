@@ -852,9 +852,32 @@ class _AdjustPanelState extends State<_AdjustPanel> {
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-                    Text(
-                      item.label,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          item.label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                        IconButton(
+                          key: Key('adjustReset-$index'),
+                          tooltip: '${item.label} 초기화',
+                          visualDensity: VisualDensity.compact,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 44,
+                            height: 44,
+                          ),
+                          onPressed: item.value == 0
+                              ? null
+                              : () => widget.onChanged(item.update(0)),
+                          icon: const Icon(Icons.refresh_rounded, size: 18),
+                          color: Colors.white,
+                          disabledColor: const Color(0xFF626262),
+                        ),
+                      ],
                     ),
                     Slider(
                       value: item.value,

@@ -141,4 +141,36 @@ void main() {
       isNull,
     );
   });
+
+  testWidgets('advanced adjustment can reset one changed control', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('고급 보정'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(Slider).first, const Offset(40, 0));
+    await tester.pumpAndSettle();
+
+    final reset = find.byKey(const Key('adjustReset-0'));
+    expect(tester.widget<IconButton>(reset).onPressed, isNotNull);
+    await tester.tap(reset);
+    await tester.pumpAndSettle();
+    expect(tester.widget<IconButton>(reset).onPressed, isNull);
+  });
 }
