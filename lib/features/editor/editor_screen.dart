@@ -49,6 +49,8 @@ class _EditorScreenState extends State<EditorScreen> {
   bool _isExporting = false;
   int _tab = 0;
   int _requestId = 0;
+  final List<EditSettings> _undoStack = <EditSettings>[];
+  final List<EditSettings> _redoStack = <EditSettings>[];
   final Map<String, Future<Uint8List>> _presetThumbnails = {};
   Set<String> _favoriteIds = <String>{};
   bool _appliedArgs = false;
@@ -149,13 +151,42 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  void _changeSettings(EditSettings settings) {
+  void _changeSettings(EditSettings settings, {bool addToHistory = true}) {
+    if (_sameSettings(_settings, settings)) return;
+    final previous = _settings;
     final priorPreset = _settings.preset?.id;
-    setState(() => _settings = settings);
+    setState(() {
+      if (addToHistory) {
+        _undoStack.add(previous);
+        if (_undoStack.length > 30) _undoStack.removeAt(0);
+        _redoStack.clear();
+      }
+      _settings = settings;
+    });
     if (settings.preset != null && settings.preset!.id != priorPreset) {
       _presetPreferences.recordUse(settings.preset!.id);
     }
     _renderPreview();
+  }
+
+  bool _sameSettings(EditSettings left, EditSettings right) =>
+      left.preset?.id == right.preset?.id &&
+      left.intensity == right.intensity &&
+      left.manual == right.manual &&
+      left.cropAspectRatio == right.cropAspectRatio;
+
+  void _undo() {
+    if (_undoStack.isEmpty) return;
+    final previous = _undoStack.removeLast();
+    _redoStack.add(_settings);
+    _changeSettings(previous, addToHistory: false);
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    final next = _redoStack.removeLast();
+    _undoStack.add(_settings);
+    _changeSettings(next, addToHistory: false);
   }
 
   Future<void> _prepareExport() async {
@@ -272,6 +303,16 @@ class _EditorScreenState extends State<EditorScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: '실행 취소',
+            onPressed: _undoStack.isEmpty || _isProcessing ? null : _undo,
+            icon: const Icon(Icons.undo),
+          ),
+          IconButton(
+            tooltip: '다시 실행',
+            onPressed: _redoStack.isEmpty || _isProcessing ? null : _redo,
+            icon: const Icon(Icons.redo),
+          ),
           if (selectedPreset != null)
             IconButton(
               tooltip: _favoriteIds.contains(selectedPreset.id)
