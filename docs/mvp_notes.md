@@ -1,3 +1,10 @@
+# Archived prototype notes — do not use as current product documentation
+
+> This document describes the earlier mock-only prototype and is retained for
+> historical context. The current product source of truth is the root README
+> and `docs/MVP_STATUS.md`; FrameFit now uses real photo input, camera capture,
+> local rendering, and export rather than the mock flow described below.
+
 # FrameFit MVP Notes
 
 This note describes the current mocked Flutter flow. The Phase 0 source-of-truth docs are `README.md`, `docs/FEATURE_SPEC.md`, `docs/DESIGN_GUIDE.md`, and `docs/TEMPLATE_SCHEMA.md`.
