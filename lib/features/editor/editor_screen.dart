@@ -304,11 +304,13 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
         actions: [
           IconButton(
+            key: const Key('undoButton'),
             tooltip: '실행 취소',
             onPressed: _undoStack.isEmpty || _isProcessing ? null : _undo,
             icon: const Icon(Icons.undo),
           ),
           IconButton(
+            key: const Key('redoButton'),
             tooltip: '다시 실행',
             onPressed: _redoStack.isEmpty || _isProcessing ? null : _redo,
             icon: const Icon(Icons.redo),

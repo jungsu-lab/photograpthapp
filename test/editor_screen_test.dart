@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:framefit/domain/models/selected_photo.dart';
+import 'package:framefit/data/presets/preset_catalog.dart';
 import 'package:framefit/features/editor/editor_screen.dart';
 import 'package:framefit/services/photo_processor.dart';
 
@@ -88,5 +89,56 @@ void main() {
     await tester.tap(find.text('초기화'));
     await tester.pumpAndSettle();
     expect(find.text('원본'), findsWidgets);
+  });
+
+  testWidgets('editor undo and redo restore a selected preset', (tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final preset = presetCatalog.first;
+    await tester.tap(find.text(preset.name).last);
+    await tester.pumpAndSettle();
+    expect(find.text(preset.name), findsWidgets);
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('undoButton'))).onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.byKey(const Key('undoButton')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('undoButton'))).onPressed,
+      isNull,
+    );
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('redoButton'))).onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.byKey(const Key('redoButton')));
+    await tester.pumpAndSettle();
+    expect(find.text(preset.name), findsWidgets);
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('undoButton'))).onPressed,
+      isNotNull,
+    );
+    expect(
+      tester.widget<IconButton>(find.byKey(const Key('redoButton'))).onPressed,
+      isNull,
+    );
   });
 }
