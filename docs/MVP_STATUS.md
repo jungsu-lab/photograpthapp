@@ -1,5 +1,16 @@
 # FrameFit MVP 상태 기록
 
+## Verification note — 2026-07-17
+
+- The ARM64 release APK was rebuilt successfully and its APK Signature Scheme
+  v2 signature was verified.
+- Preset model, preset catalogue, and composition catalogue tests passed using
+  the standalone Dart test runner.
+- The complete `flutter analyze` and Flutter widget-test commands have not
+  been marked as passed for this workstation: the local Flutter test runtime
+  can stall while creating its isolate. Re-run the full commands on a clean
+  Flutter host or CI before declaring the entire suite green.
+
 갱신일: 2026-07-16
 
 이 문서는 구현 의도와 실제 검증을 구분한다. 체크되지 않은 항목을 완료로
