@@ -5,7 +5,6 @@ class AppColors {
   static const surface = Color(0xFFFFFFFF);
   static const surfaceSoft = Color(0xFFF4F4F2);
   static const surfacePressed = Color(0xFFEDEDEA);
-  static const photoPlaceholder = Color(0xFFECECEA);
   static const textPrimary = Color(0xFF111111);
   static const textSecondary = Color(0xFF666666);
   static const textMuted = Color(0xFFA0A0A0);

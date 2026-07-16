@@ -1,5 +1,14 @@
 # FrameFit Template Schema
 
+> **Archived schema for the former mock-template prototype.**
+>
+> The current app uses `PhotoPreset` / `PresetRecipe` in
+> `lib/domain/models/photo_preset.dart` and `CompositionTemplate` in
+> `lib/domain/models/composition_template.dart`. Current preset and capture
+> catalogues live under `lib/data/presets/` and `lib/data/composition/`.
+> This document remains only as historical context and does not describe
+> runtime data.
+
 ## Current Model
 
 The app uses `EditTemplate` in `lib/data/models/template.dart`. Phase 2 keeps

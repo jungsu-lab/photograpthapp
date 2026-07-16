@@ -1,5 +1,13 @@
 # FrameFit Feature Spec
 
+> **Archived prototype specification (not current product behavior).**
+>
+> This file records the earlier mock-only UI concept. The shipped MVP now
+> uses real gallery/camera input, local pixel rendering, and gallery/share
+> export. See the root `README.md` and `docs/MVP_STATUS.md` for the current,
+> evidence-backed feature set. The historical details below must not be used
+> to describe the current app.
+
 ## Product Definition
 
 FrameFit is a photo coach and template-preview app. A user chooses the kind of photo they want, receives simple guidance for taking it, then previews a template-based result before saving or sharing in a future phase.

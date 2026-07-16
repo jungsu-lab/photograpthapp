@@ -1,5 +1,10 @@
 # FrameFit Design Acceptance Checklist
 
+> **Archived visual-rebuild checklist.** It evaluated the earlier
+> placeholder-based prototype. It is not a statement of the present editor,
+> camera, input, or export behavior; refer to `README.md` and
+> `docs/MVP_STATUS.md` for current status.
+
 ## Old Tokens Removed
 
 | Old token or pattern | Status | Replacement |

@@ -1,6 +1,9 @@
 # FrameFit Design Notes
 
-This note is retained as a short history pointer. The current design source of truth is `docs/DESIGN_GUIDE.md`.
+> **Archived mock-prototype notes.** The current app is a local-first photo
+> editor with real camera/gallery input and rendering. Use `README.md`,
+> `docs/MVP_STATUS.md`, and the current source under `lib/` rather than the
+> historical statements below.
 
 ## Current Direction
 
