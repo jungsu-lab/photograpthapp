@@ -7,7 +7,7 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 37 passing tests. Both ran
+  `flutter test --concurrency=1` completed with 38 passing tests. Both ran
   from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
   set to ASCII paths; the default Unicode Windows user path can stall Flutter
   test compilation on this workstation.
