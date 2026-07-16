@@ -35,4 +35,52 @@ void main() {
     expect(await File(first.path).exists(), isFalse);
     expect(await File(second.path).exists(), isFalse);
   });
+
+  test(
+    'propagates a gallery failure and leaves cleanup to the caller',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'framefit-export-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final service = PhotoExportService(
+        temporaryDirectory: () async => directory,
+        saveToGallery: (_) async => throw StateError('gallery unavailable'),
+      );
+      final photo = await service.createImage(
+        Uint8List.fromList(<int>[1, 2, 3]),
+        sourceName: 'safe.jpg',
+        format: PhotoOutputFormat.jpeg,
+      );
+
+      await expectLater(
+        service.saveToGallery(photo),
+        throwsA(isA<StateError>()),
+      );
+      expect(await File(photo.path).exists(), isTrue);
+
+      await service.deleteTemporary(photo);
+      expect(await File(photo.path).exists(), isFalse);
+    },
+  );
+
+  test('propagates a share failure and leaves cleanup to the caller', () async {
+    final directory = await Directory.systemTemp.createTemp('framefit-export-');
+    addTearDown(() => directory.delete(recursive: true));
+    final service = PhotoExportService(
+      temporaryDirectory: () async => directory,
+      sharePhoto: (_) async => throw StateError('share unavailable'),
+    );
+    final photo = await service.createImage(
+      Uint8List.fromList(<int>[4, 5, 6]),
+      sourceName: 'safe.jpg',
+      format: PhotoOutputFormat.jpeg,
+    );
+
+    await expectLater(service.share(photo), throwsA(isA<StateError>()));
+    expect(await File(photo.path).exists(), isTrue);
+
+    await service.deleteTemporary(photo);
+    expect(await File(photo.path).exists(), isFalse);
+  });
 }

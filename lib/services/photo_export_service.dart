@@ -15,10 +15,17 @@ class ExportedPhoto {
 }
 
 class PhotoExportService {
-  PhotoExportService({Future<Directory> Function()? temporaryDirectory})
-    : _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory;
+  PhotoExportService({
+    Future<Directory> Function()? temporaryDirectory,
+    Future<void> Function(ExportedPhoto photo)? saveToGallery,
+    Future<ShareResult> Function(ExportedPhoto photo)? sharePhoto,
+  }) : _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
+       _saveToGallery = saveToGallery ?? _saveToDeviceGallery,
+       _sharePhoto = sharePhoto ?? _shareWithSystemSheet;
 
   final Future<Directory> Function() _temporaryDirectory;
+  final Future<void> Function(ExportedPhoto photo) _saveToGallery;
+  final Future<ShareResult> Function(ExportedPhoto photo) _sharePhoto;
 
   Future<ExportedPhoto> createImage(
     Uint8List bytes, {
@@ -41,17 +48,21 @@ class PhotoExportService {
     return ExportedPhoto(path: output.path, fileName: fileName);
   }
 
-  Future<void> saveToGallery(ExportedPhoto photo) async {
-    await Gal.putImage(photo.path, album: 'FrameFit');
-  }
+  Future<void> saveToGallery(ExportedPhoto photo) => _saveToGallery(photo);
 
-  Future<ShareResult> share(ExportedPhoto photo) => SharePlus.instance.share(
-    ShareParams(
-      files: [XFile(photo.path)],
-      text: 'Edited with FrameFit',
-      title: 'FrameFit photo',
-    ),
-  );
+  Future<ShareResult> share(ExportedPhoto photo) => _sharePhoto(photo);
+
+  static Future<void> _saveToDeviceGallery(ExportedPhoto photo) =>
+      Gal.putImage(photo.path, album: 'FrameFit');
+
+  static Future<ShareResult> _shareWithSystemSheet(ExportedPhoto photo) =>
+      SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(photo.path)],
+          text: 'Edited with FrameFit',
+          title: 'FrameFit photo',
+        ),
+      );
 
   /// The exported file only exists to hand bytes to Gallery or the share
   /// sheet. Failures during cleanup must not turn a completed save/share into
