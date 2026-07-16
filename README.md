@@ -52,8 +52,11 @@ then save or share a new file.
 - Photo and camera access is requested only after the user chooses that
   action. If camera access was permanently denied, the app offers a direct
   link to the application settings page.
-- Android photo import uses the system picker and does not request broad
-  `READ_EXTERNAL_STORAGE` or `READ_MEDIA_IMAGES` access.
+- Android photo import uses the system picker and does not request broad photo
+  library access on modern Android. Android 9 and lower retain legacy external
+  storage compatibility only so a user-requested export can be saved to the
+  gallery; Android's manifest merger implies the paired legacy read permission
+  for those old OS versions.
 - Do not commit real photos, `.env` files, signing keys, certificates, or
   service-account files.
 
