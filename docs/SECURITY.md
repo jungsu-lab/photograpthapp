@@ -32,6 +32,6 @@ sent to a service, written to analytics, or committed to this repository.
 ## Verification
 
 The GitHub quality gate runs dependency resolution, analysis, tests, and an
-Android debug build on pushes to `main` and pull requests. A release APK is
-not a public-distribution artifact until it is signed with a private release
-key outside this repository.
+Android debug build on pushes to `main`, the active real-photo-preset branch,
+and pull requests. A release APK is not a public-distribution artifact until
+it is signed with a private release key outside this repository.
