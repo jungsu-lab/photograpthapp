@@ -3,7 +3,7 @@ name: Flutter quality gate
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, feat/real-photo-presets]
 
 permissions:
   contents: read
