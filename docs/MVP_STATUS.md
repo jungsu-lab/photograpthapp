@@ -55,7 +55,7 @@
   and stale-request protection were added, and abandoned temporary exports
   were made cleanup-safe. Legacy storage permissions are now limited to
   Android 9 and below. Its SHA-256 is
-  `0858EF16D33EDE1836AA8F7D2A313A14CC3F86F3EA754883792B6906565ECBF6`,
+  `FB5050DEBFCCA7B052ED9501E7A1F0D8DB124BC778E7E707F7079CC33A3718B4`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
