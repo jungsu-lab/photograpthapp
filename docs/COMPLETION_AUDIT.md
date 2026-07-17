@@ -31,8 +31,8 @@
 - GitHub Actions 실행 #3은 Linux Android 분석·기능 테스트·디버그 APK
   빌드와 Windows 화면 비교 테스트를 모두 성공으로 마쳤다.
 - 최신 ARM64 릴리스 APK는 APK Signature Scheme v2 서명을 통과했다.
-  `FrameFit-arm64-release-20260717.apk`의 SHA-256은
-  `B79353A65F1AC302FA9BD85A67EB99D2F13BD9A3627F8A3EBB13E8CFF9410867`이다.
+  `FrameFit-arm64-heic-release-20260717.apk`의 SHA-256은
+  `2C9503C99B5B39A4F3EFFBA706979EDF53D567A780367B2047A12FD6EDBA13F2`이다.
 
 ## 완료 전 남은 직접 검증
 
