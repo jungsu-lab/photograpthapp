@@ -35,6 +35,7 @@ class _CameraScreenState extends State<CameraScreen>
   bool _isCapturing = false;
   String? _cameraError;
   bool _cameraPermissionLocked = false;
+  int _initializationGeneration = 0;
   String _mode = '인물';
   FlashMode _flashMode = FlashMode.off;
   DevicePoseGuidance? _poseGuidance;
@@ -53,6 +54,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   void dispose() {
+    _initializationGeneration++;
     WidgetsBinding.instance.removeObserver(this);
     _poseSubscription?.cancel();
     _controller?.dispose();
@@ -61,6 +63,11 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) {
+      // Invalidate any outstanding discovery/initialization request before
+      // the platform tears its camera surface down.
+      _initializationGeneration++;
+    }
     final controller = _controller;
     if (controller == null) return;
     if (state == AppLifecycleState.inactive) {
@@ -72,6 +79,7 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<void> _initializeCamera({CameraDescription? preferred}) async {
+    final generation = ++_initializationGeneration;
     setState(() {
       _isInitializing = true;
       _cameraError = null;
@@ -80,6 +88,7 @@ class _CameraScreenState extends State<CameraScreen>
     CameraController? next;
     try {
       _cameras = await availableCameras().timeout(_initializationTimeout);
+      if (!_isCurrentInitialization(generation)) return;
       if (_cameras.isEmpty) {
         throw CameraException('no-camera', '사용 가능한 카메라가 없어요.');
       }
@@ -93,7 +102,7 @@ class _CameraScreenState extends State<CameraScreen>
       await next.initialize().timeout(_initializationTimeout);
       await _applyTemplateCameraSettings(next);
       final old = _controller;
-      if (!mounted) {
+      if (!_isCurrentInitialization(generation)) {
         await next.dispose();
         return;
       }
@@ -101,7 +110,7 @@ class _CameraScreenState extends State<CameraScreen>
       await old?.dispose();
     } on TimeoutException {
       await next?.dispose();
-      if (mounted) {
+      if (_isCurrentInitialization(generation)) {
         setState(
           () => _cameraError =
               '카메라 응답이 늦어요. 다른 앱에서 카메라를 사용 중인지 확인한 뒤 다시 시도해 주세요.',
@@ -109,7 +118,7 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } on CameraException catch (error) {
       await next?.dispose();
-      if (mounted) {
+      if (_isCurrentInitialization(generation)) {
         setState(() {
           _cameraError = _cameraMessage(error);
           _cameraPermissionLocked =
@@ -118,15 +127,18 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } catch (_) {
       await next?.dispose();
-      if (mounted) {
+      if (_isCurrentInitialization(generation)) {
         setState(() => _cameraError = '카메라를 시작하지 못했어요. 권한을 확인해 주세요.');
       }
     } finally {
-      if (mounted) {
+      if (_isCurrentInitialization(generation)) {
         setState(() => _isInitializing = false);
       }
     }
   }
+
+  bool _isCurrentInitialization(int generation) =>
+      mounted && generation == _initializationGeneration;
 
   CameraDescription _preferredCamera() {
     final template = widget.template;
