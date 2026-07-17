@@ -12,6 +12,10 @@
   `Pictures/FrameFit/FrameFit-23-20260717053442271464.png`.
 - The Android system share sheet also opened with the generated image preview
   and available share targets.
+- A later x64 debug build (including the latest temporary-export cleanup)
+  was reinstalled and launched on the same emulator. The Home screen, the
+  three-item navigation bar, and labeled photo-import/camera actions were
+  confirmed through the Android accessibility tree.
 - This is emulator evidence, not a substitute for a physical-device camera,
   host-camera configuration, a receiving third-party app, or iOS validation.
 - During the composition-camera flow, Android's camera permission prompt was
@@ -41,9 +45,10 @@
   window services. A clean later boot completed, and the successful
   installation and interactive flow are recorded above.
 - The current ARM64 APK was rebuilt successfully after the home screen's
-  recent-preset label was made accurate and the camera initialization timeout
-  was added. Its SHA-256 is
-  `75435C2D9A76E145894BFB04CD7BACE68A89FCB4BAAD508D75AB148C96099E2D`,
+  recent-preset label was made accurate, the camera initialization timeout
+  was added, and abandoned temporary exports were made cleanup-safe. Its
+  SHA-256 is
+  `E6DC5570F1ADB28DD4A3A14D7F469BDC9A737AFB67D7C15F2B632C3D27C80226`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16

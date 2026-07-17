@@ -221,6 +221,8 @@ class _EditorScreenState extends State<EditorScreen> {
     );
     if (!mounted || options == null) return;
     setState(() => _isExporting = true);
+    ExportedPhoto? exported;
+    var wasHandedOff = false;
     try {
       final bytes = await _processor.render(
         PhotoProcessRequest(
@@ -232,34 +234,38 @@ class _EditorScreenState extends State<EditorScreen> {
           cropAspectRatio: _settings.cropAspectRatio,
         ),
       );
-      final exported = await _exporter.createImage(
+      exported = await _exporter.createImage(
         bytes,
         sourceName: _photo.name,
         format: options.format,
       );
+      // A route can disappear while the full-resolution render is running.
+      // Do not retain a private temporary photo merely because there is no
+      // longer a sheet to offer it to.
       if (!mounted) return;
-      var wasUsed = false;
       await showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
         builder: (sheetContext) => _ExportSheet(
           options: options,
           onSave: () {
-            wasUsed = true;
+            wasHandedOff = true;
             Navigator.pop(sheetContext);
-            return _save(exported);
+            return _save(exported!);
           },
           onShare: () {
-            wasUsed = true;
+            wasHandedOff = true;
             Navigator.pop(sheetContext);
-            return _share(exported);
+            return _share(exported!);
           },
         ),
       );
-      if (!wasUsed) unawaited(_exporter.deleteTemporary(exported));
     } catch (error) {
       if (mounted) _message('내보내기에 실패했어요. ${_cleanError(error)}');
     } finally {
+      if (exported != null && !wasHandedOff) {
+        await _exporter.deleteTemporary(exported);
+      }
       if (mounted) setState(() => _isExporting = false);
     }
   }
