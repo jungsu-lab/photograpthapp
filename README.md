@@ -80,8 +80,19 @@ For Android, use JDK 17 or later and enable Windows Developer Mode when the
 Flutter tooling requests plugin symlink support. The in-app camera supports
 Android 7.0 (API 24) or later. On Windows accounts with a non-ASCII user path,
 native Android builds may also require an ASCII-only temporary checkout and
-`PUB_CACHE` path; this is a local build-environment workaround, not an app
-runtime requirement.
+`PUB_CACHE` path; Flutter tests also need an ASCII temporary directory. This
+is a local build-environment workaround, not an app runtime requirement. For
+example, run the commands from an ASCII-only checkout such as
+`C:\\framefit-build`:
+
+```powershell
+$env:PUB_CACHE = 'C:\\flutter-pub-cache'
+$env:TEMP = 'C:\\flutter-temp'
+$env:TMP = 'C:\\flutter-temp'
+flutter analyze
+flutter test --exclude-tags golden --concurrency=1
+flutter test --tags golden --concurrency=1
+```
 
 To make a small Android release APK for each CPU type:
 
