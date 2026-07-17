@@ -41,8 +41,9 @@ then save or share a new file.
 - Camera coaching provides visual overlays, device-level feedback, and camera
   settings only. It does not claim to detect faces, objects, scene quality, or
   calculate a composition score.
-- HEIC is not currently accepted by the local processor. Convert it to JPEG or
-  PNG before editing.
+- On Android 9 and later, the system picker can convert a selected HEIC image
+  to JPEG for FrameFit. If a device returns unconverted HEIC bytes, FrameFit
+  safely asks for JPEG or PNG instead.
 
 ## Privacy and security
 

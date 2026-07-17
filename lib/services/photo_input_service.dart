@@ -41,6 +41,11 @@ class PhotoInputService {
   ) async {
     final file = await _picker.pickImage(
       source: source,
+      // Android 9+ only exposes HEIC through image_picker when a size
+      // operation is requested. This upper bound matches FrameFit's safe
+      // decode limit, so supported JPEG/PNG inputs below it keep their size.
+      maxWidth: PhotoInputValidator.maximumDimension.toDouble(),
+      maxHeight: PhotoInputValidator.maximumDimension.toDouble(),
       imageQuality: 100,
       requestFullMetadata: false,
     );
@@ -132,9 +137,10 @@ class PhotoInputValidator {
     if (fileName.trim().isEmpty) {
       return 'framefit-photo.${_extensionFor(format)}';
     }
-    return _extensionOf(fileName) == null
-        ? '$fileName.${_extensionFor(format)}'
-        : fileName;
+    final extension = _extensionOf(fileName);
+    if (extension == null) return '$fileName.${_extensionFor(format)}';
+    if (_isCanonicalExtension(format, extension)) return fileName;
+    return fileName.replaceFirst(RegExp(r'\.[^.]+$'), '.${_extensionFor(format)}');
   }
 
   static PhotoInputFormat? _formatFromBytes(List<int> bytes) {
@@ -166,9 +172,24 @@ class PhotoInputValidator {
 
   static bool _extensionMatches(PhotoInputFormat format, String extension) =>
       switch (format) {
-        PhotoInputFormat.jpeg => extension == 'jpg' || extension == 'jpeg',
+        // Android's system picker can transcode HEIC to JPEG while retaining
+        // the source filename. The decoded bytes remain authoritative and the
+        // name is normalised to .jpg before the edit session begins.
+        PhotoInputFormat.jpeg =>
+          extension == 'jpg' ||
+              extension == 'jpeg' ||
+              extension == 'heic' ||
+              extension == 'heif',
         PhotoInputFormat.png => extension == 'png',
       };
+
+  static bool _isCanonicalExtension(
+    PhotoInputFormat format,
+    String extension,
+  ) => switch (format) {
+    PhotoInputFormat.jpeg => extension == 'jpg' || extension == 'jpeg',
+    PhotoInputFormat.png => extension == 'png',
+  };
 
   static String _extensionFor(PhotoInputFormat format) =>
       format == PhotoInputFormat.png ? 'png' : 'jpg';

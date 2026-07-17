@@ -53,6 +53,17 @@ void main() {
     );
   });
 
+  test('accepts a system-transcoded HEIC JPEG and normalizes its name', () {
+    expect(
+      PhotoInputValidator.validate(fileName: 'travel.heic', bytes: jpeg),
+      PhotoInputFormat.jpeg,
+    );
+    expect(
+      PhotoInputValidator.normalizedName('travel.heic', PhotoInputFormat.jpeg),
+      'travel.jpg',
+    );
+  });
+
   test('rejects images whose decoded dimensions would use too much memory', () {
     final oversized = Uint8List.fromList(
       img.encodePng(img.Image(width: PhotoInputValidator.maximumDimension + 1, height: 1)),
