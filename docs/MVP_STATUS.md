@@ -16,6 +16,9 @@
   was reinstalled and launched on the same emulator. The Home screen, the
   three-item navigation bar, and labeled photo-import/camera actions were
   confirmed through the Android accessibility tree.
+- After the legacy-storage permission change, a clean Android 16 emulator
+  install exposed only the ungranted camera runtime permission. No broad
+  photo or external-storage runtime permission was present.
 - This is emulator evidence, not a substitute for a physical-device camera,
   host-camera configuration, a receiving third-party app, or iOS validation.
 - During the composition-camera flow, Android's camera permission prompt was
