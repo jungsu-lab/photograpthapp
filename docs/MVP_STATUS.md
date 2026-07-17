@@ -16,9 +16,9 @@
 - A local x64 debug APK was built successfully on 2026-07-17. Its emulator
   image did not finish starting Android's package and window services, so no
   emulator installation or interactive-flow result is claimed from that run.
-- The current ARM64 APK was rebuilt successfully after compact-screen
-  onboarding responsiveness was fixed. Its SHA-256 is
-  `EEB0BDBD286BEFD36CFE90B9E258E99AE0251F4258C39E2A3E34620515514600`,
+- The current ARM64 APK was rebuilt successfully after export failure
+  handling was covered. Its SHA-256 is
+  `04419028E6EBF6453DE24B880A87FCCE871371540AB161BE2F35672D8944AEC7`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
