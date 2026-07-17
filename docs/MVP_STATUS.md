@@ -78,6 +78,13 @@
   `FrameFit-CAP1602257483228859603-20260717095727358313.jpg`. MediaStore
   confirmed the saved result under `Pictures/FrameFit/`.
 
+## Accepted Android MVP boundary — 2026-07-17
+
+- The product owner accepted Android MVP completion based on the real-device
+  records, latest Android emulator flow, automated tests, and passing CI.
+- GitHub repository-visibility administration and direct iPhone execution are
+  tracked as separate follow-up work and are not represented as completed.
+
 갱신일: 2026-07-16
 
 이 문서는 구현 의도와 실제 검증을 구분한다. 체크되지 않은 항목을 완료로
