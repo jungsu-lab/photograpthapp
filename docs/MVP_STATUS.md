@@ -30,6 +30,10 @@
   backend failed to return, so the bounded-error path is directly verified.
   Successful capture still requires confirmation on a responsive virtual or
   physical camera.
+- The latest x64 debug APK was reinstalled after recent-preset refresh fixes.
+  Choosing `도쿄 네온` before photo import opened the real editor with that
+  preset applied, persisted `tokyo-neon` locally, and showed it immediately in
+  Home's recent-preset chip after returning through the bottom navigation.
 
 ## Verification note — 2026-07-17
 
@@ -38,11 +42,13 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 47 passing tests. The suite
+  `flutter test --concurrency=1` completed with 50 passing tests. The suite
   now verifies that Gallery and system-share failures are propagated safely
   while temporary output cleanup remains under the caller's control, and
   protects the Android/iOS least-privilege permission configuration, and
   includes visual baselines for Home and compact/large onboarding layouts.
+  It also verifies that an initially applied preset is recorded and that
+  returning to Home refreshes the recent-preset list.
   Both ran
   from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
   set to ASCII paths; the default Unicode Windows user path can stall Flutter

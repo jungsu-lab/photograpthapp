@@ -21,7 +21,15 @@ class FrameFitShell extends StatefulWidget {
 
 class _FrameFitShellState extends State<FrameFitShell> {
   var _index = 0;
+  var _homeRefreshToken = 0;
   var _openedInitialCamera = false;
+
+  void _selectIndex(int index) {
+    setState(() {
+      _index = index;
+      if (index == 0) _homeRefreshToken++;
+    });
+  }
 
   @override
   void initState() {
@@ -41,9 +49,10 @@ class _FrameFitShellState extends State<FrameFitShell> {
       index: _index,
       children: [
         HomeScreen(
+          key: ValueKey(_homeRefreshToken),
           autoOpenPicker: widget.openPhotoPickerOnStart,
-          onOpenShoot: () => setState(() => _index = 1),
-          onOpenEdit: () => setState(() => _index = 2),
+          onOpenShoot: () => _selectIndex(1),
+          onOpenEdit: () => _selectIndex(2),
         ),
         const ShootingLibraryScreen(),
         const TemplateScreen(embedded: true),
@@ -51,7 +60,7 @@ class _FrameFitShellState extends State<FrameFitShell> {
     ),
     bottomNavigationBar: NavigationBar(
       selectedIndex: _index,
-      onDestinationSelected: (index) => setState(() => _index = index),
+      onDestinationSelected: _selectIndex,
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.home_outlined),

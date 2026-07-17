@@ -35,7 +35,7 @@ void main() {
       find.byType(OnboardingScreen),
       matchesGoldenFile('goldens/onboarding_360x800_text130.png'),
     );
-  });
+  }, tags: 'golden');
 
   testWidgets('onboarding matches the large phone visual baseline', (
     tester,
@@ -47,5 +47,5 @@ void main() {
       find.byType(OnboardingScreen),
       matchesGoldenFile('goldens/onboarding_412x915.png'),
     );
-  });
+  }, tags: 'golden');
 }

@@ -100,8 +100,17 @@ class _EditorScreenState extends State<EditorScreen> {
         preset: preset,
         intensity: preset.defaultIntensity,
       );
+      unawaited(_recordPresetUse(preset.id));
     }
     _appliedArgs = true;
+  }
+
+  Future<void> _recordPresetUse(String id) async {
+    try {
+      await _presetPreferences.recordUse(id);
+    } catch (_) {
+      // Recent history is optional and must never interrupt photo editing.
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -181,7 +190,7 @@ class _EditorScreenState extends State<EditorScreen> {
       _settings = settings;
     });
     if (settings.preset != null && settings.preset!.id != priorPreset) {
-      _presetPreferences.recordUse(settings.preset!.id);
+      unawaited(_recordPresetUse(settings.preset!.id));
     }
     _schedulePreview();
   }

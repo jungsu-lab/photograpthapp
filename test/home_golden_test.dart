@@ -17,5 +17,5 @@ void main() {
       find.byType(HomeScreen),
       matchesGoldenFile('goldens/home_390x844.png'),
     );
-  });
+  }, tags: 'golden');
 }

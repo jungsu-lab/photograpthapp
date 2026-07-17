@@ -7,15 +7,22 @@ void main() {
     final manifest = await File(
       'android/app/src/main/AndroidManifest.xml',
     ).readAsString();
+    final normalizedManifest = manifest.replaceAll('\r\n', '\n');
 
-    expect(manifest, contains('android.permission.CAMERA'));
+    expect(normalizedManifest, contains('android.permission.CAMERA'));
     expect(
-      manifest,
+      normalizedManifest,
       contains('android.permission.RECORD_AUDIO"\n        tools:node="remove"'),
     );
-    expect(manifest, isNot(contains('android.permission.READ_MEDIA_IMAGES')));
-    expect(manifest, contains('android.permission.READ_EXTERNAL_STORAGE'));
-    expect(manifest, contains('android:maxSdkVersion="28"'));
+    expect(
+      normalizedManifest,
+      isNot(contains('android.permission.READ_MEDIA_IMAGES')),
+    );
+    expect(
+      normalizedManifest,
+      contains('android.permission.READ_EXTERNAL_STORAGE'),
+    );
+    expect(normalizedManifest, contains('android:maxSdkVersion="28"'));
   });
 
   test('iOS explains every user-triggered photo capability', () async {

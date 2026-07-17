@@ -89,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppRoutes.editor,
         arguments: EditorArgs(photo: photo, initialPreset: initialPreset),
       );
+      if (mounted) await _loadRecentPresets();
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -133,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
     body: SafeArea(
       top: false,
       child: ListView(
+        key: const Key('homeScrollView'),
         padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
         children: [
           Text(

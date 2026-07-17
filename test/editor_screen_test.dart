@@ -91,6 +91,34 @@ void main() {
     expect(find.text('원본'), findsWidgets);
   });
 
+  testWidgets('an initially applied preset is recorded as recently used', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preset = presetCatalog.firstWhere((item) => item.id == 'tokyo-neon');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+            initialPreset: preset,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getStringList('recent-preset-ids-v1'), <String>[
+      preset.id,
+    ]);
+  });
+
   testWidgets('editor undo and redo restore a selected preset', (tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await tester.pumpWidget(
