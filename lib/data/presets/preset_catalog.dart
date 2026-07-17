@@ -467,3 +467,10 @@ const presetCatalog = <PhotoPreset>[
     ),
   ),
 ];
+
+PhotoPreset? presetById(String id) {
+  for (final preset in presetCatalog) {
+    if (preset.id == id) return preset;
+  }
+  return null;
+}

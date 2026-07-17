@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/router/app_routes.dart';
+import '../edit_hub/edit_hub_screen.dart';
 import '../home/home_screen.dart';
 import '../shooting/shooting_library_screen.dart';
-import '../templates/template_screen.dart';
 
 class FrameFitShell extends StatefulWidget {
   const FrameFitShell({
@@ -55,7 +55,7 @@ class _FrameFitShellState extends State<FrameFitShell> {
           onOpenEdit: () => _selectIndex(2),
         ),
         const ShootingLibraryScreen(),
-        const TemplateScreen(embedded: true),
+        const EditHubScreen(),
       ],
     ),
     bottomNavigationBar: NavigationBar(

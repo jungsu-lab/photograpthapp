@@ -9,9 +9,14 @@ import '../../services/preset_preferences.dart';
 import '../editor/editor_screen.dart';
 
 class TemplateScreen extends StatefulWidget {
-  const TemplateScreen({super.key, this.embedded = false});
+  const TemplateScreen({
+    super.key,
+    this.embedded = false,
+    this.showAppBar = true,
+  });
 
   final bool embedded;
+  final bool showAppBar;
 
   @override
   State<TemplateScreen> createState() => _TemplateScreenState();
@@ -86,19 +91,24 @@ class _TemplateScreenState extends State<TemplateScreen> {
         .toList();
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F5),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFF9F8F5),
-        elevation: 0,
-        automaticallyImplyLeading: !widget.embedded,
-        leading: widget.embedded
-            ? null
-            : IconButton(
-                tooltip: '뒤로',
-                onPressed: () => Navigator.maybePop(context),
-                icon: const Icon(Icons.arrow_back_ios_new),
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor: const Color(0xFFF9F8F5),
+              elevation: 0,
+              automaticallyImplyLeading: !widget.embedded,
+              leading: widget.embedded
+                  ? null
+                  : IconButton(
+                      tooltip: '뒤로',
+                      onPressed: () => Navigator.maybePop(context),
+                      icon: const Icon(Icons.arrow_back_ios_new),
+                    ),
+              title: const Text(
+                '프리셋',
+                style: TextStyle(fontWeight: FontWeight.w800),
               ),
-        title: const Text('프리셋', style: TextStyle(fontWeight: FontWeight.w800)),
-      ),
+            )
+          : null,
       body: Column(
         children: [
           Padding(

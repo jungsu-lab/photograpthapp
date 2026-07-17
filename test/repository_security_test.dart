@@ -37,4 +37,15 @@ void main() {
 
     expect(findings, isEmpty);
   });
+
+  test('community schema enables RLS and never embeds an admin key', () async {
+    final migration = await File(
+      'supabase/migrations/202607170001_create_community.sql',
+    ).readAsString();
+
+    expect(migration, contains('enable row level security'));
+    expect(migration, contains("bucket_id = 'community-photos'"));
+    expect(migration, contains('(select auth.uid())'));
+    expect(migration.toLowerCase(), isNot(contains('service_role')));
+  });
 }

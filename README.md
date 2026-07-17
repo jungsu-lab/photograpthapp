@@ -25,6 +25,9 @@ then save or share a new file.
   transparency for PNG input; save to the FrameFit album or open the system
   share sheet.
 - Keep favourites and recent preset use on-device. No account is required.
+- Open `Edit > Community` to browse and publish public photos, recommend,
+  save, comment, report, and reuse a post's preset or composition. This
+  optional online feature is enabled only when a Supabase project is supplied.
 - Browse 20 capture-composition templates for portraits, space, mood, and
   food/product shots. Four quick Shot Packs connect a composition template to
   a suggested edit preset.
@@ -37,8 +40,10 @@ then save or share a new file.
 
 - The editor performs global colour adjustments only. It does not provide
   face-aware retouching, object detection, selective masks, perspective
-  correction, RAW editing, batch editing, cloud sync, analytics, or AI image
-  generation.
+  correction, RAW editing, batch editing, analytics, or AI image generation.
+- Community v1 is a public inspiration feed, not private messaging or general
+  cloud photo backup. A production launch still requires an operator
+  moderation dashboard and published retention/deletion policy.
 - Camera coaching provides visual overlays, device-level feedback, and camera
   settings only. It does not claim to detect faces, objects, scene quality, or
   calculate a composition score.
@@ -48,8 +53,14 @@ then save or share a new file.
 
 ## Privacy and security
 
-- Editing and rendering occur on the device. FrameFit does not upload photos,
-  image paths, metadata, or edit settings to a server.
+- Editing and rendering occur on the device. FrameFit never uploads an editing
+  photo unless the user explicitly confirms a public community post.
+- Community uploads are re-oriented, resized to at most 2048 px, and
+  re-encoded as JPEG before upload. GPS, EXIF, XMP, IPTC, comments, and the
+  original file name are not sent.
+- The app accepts only a Supabase publishable client key. Authorization is
+  enforced with database and Storage RLS; administrator/service keys must
+  never be embedded in the app.
 - A new export never copies JPEG EXIF/XMP/IPTC/comment metadata; this removes
   GPS location data by default. The original file is never modified.
 - Temporary export files are removed after saving, sharing, or dismissing the
@@ -76,6 +87,10 @@ flutter analyze
 flutter test
 flutter run
 ```
+
+The editor works without a backend. To enable the real community, provision
+the schema and use the `--dart-define` values documented in
+[`docs/COMMUNITY_BACKEND.md`](docs/COMMUNITY_BACKEND.md).
 
 For Android, use JDK 17 or later and enable Windows Developer Mode when the
 Flutter tooling requests plugin symlink support. The in-app camera supports

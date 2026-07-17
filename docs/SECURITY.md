@@ -1,7 +1,9 @@
 # FrameFit security and privacy checklist
 
-FrameFit is local-first: user photos and their edit settings must never be
+FrameFit editing is local-first: editing photos and settings must never be
 sent to a service, written to analytics, or committed to this repository.
+The separately selected community photo may be uploaded only after explicit
+public-post confirmation and the privacy preparation described below.
 
 ## Before committing
 
@@ -26,8 +28,14 @@ sent to a service, written to analytics, or committed to this repository.
 - Strip location and ancillary JPEG metadata from exports by default.
 - Delete temporary export files after save, share, cancellation, or failure
   whenever the platform no longer needs the file.
-- Any new server upload, analytics SDK, cloud sync, or AI feature requires an
-  explicit product/privacy review before implementation.
+- Community publishing must re-orient, resize, and re-encode the selected image
+  so GPS, EXIF, XMP, IPTC, comments, and original names never leave the device.
+- The app may contain a Supabase publishable client key supplied at build time,
+  but never a secret, service-role, database, or administrator credential.
+- Every exposed database table and storage write path must be protected by RLS,
+  ownership checks, input limits, reporting, and rate limits.
+- Any additional server upload, analytics SDK, cloud sync, or AI feature still
+  requires a separate explicit product/privacy review before implementation.
 
 ## Verification
 
