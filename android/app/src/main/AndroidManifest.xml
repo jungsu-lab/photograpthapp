@@ -6,6 +6,13 @@
     <uses-permission
         android:name="android.permission.RECORD_AUDIO"
         tools:node="remove" />
+    <!-- Gallery saving needs the legacy storage group only on Android 9 and
+         below. Imports use the system photo picker, so never request broad
+         media access on current Android versions. -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:replace="android:maxSdkVersion" />
     <application
         android:label="FrameFit"
         android:name="${applicationName}"

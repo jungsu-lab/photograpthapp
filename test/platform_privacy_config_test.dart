@@ -14,10 +14,8 @@ void main() {
       contains('android.permission.RECORD_AUDIO"\n        tools:node="remove"'),
     );
     expect(manifest, isNot(contains('android.permission.READ_MEDIA_IMAGES')));
-    expect(
-      manifest,
-      isNot(contains('android.permission.READ_EXTERNAL_STORAGE')),
-    );
+    expect(manifest, contains('android.permission.READ_EXTERNAL_STORAGE'));
+    expect(manifest, contains('android:maxSdkVersion="28"'));
   });
 
   test('iOS explains every user-triggered photo capability', () async {

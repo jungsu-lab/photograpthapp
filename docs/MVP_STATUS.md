@@ -47,8 +47,9 @@
 - The current ARM64 APK was rebuilt successfully after the home screen's
   recent-preset label was made accurate, the camera initialization timeout
   and stale-request protection were added, and abandoned temporary exports
-  were made cleanup-safe. Its SHA-256 is
-  `3433F9683BCF4ADAF7E1B5B6C9567F6850678F4EC384200C9F00A6566AAA3E7A`,
+  were made cleanup-safe. Legacy storage permissions are now limited to
+  Android 9 and below. Its SHA-256 is
+  `20116139543C8F198EC341B3D28335D869F06296217D35EA828540B72319BC1C`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
