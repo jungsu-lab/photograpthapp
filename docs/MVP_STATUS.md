@@ -10,8 +10,10 @@
 - Android's picker displayed its selected-photos privacy notice. The exported
   file was confirmed through MediaStore as
   `Pictures/FrameFit/FrameFit-23-20260717053442271464.png`.
+- The Android system share sheet also opened with the generated image preview
+  and available share targets.
 - This is emulator evidence, not a substitute for a physical-device camera,
-  host-camera configuration, third-party share target, or iOS validation.
+  host-camera configuration, a receiving third-party app, or iOS validation.
 
 ## Verification note — 2026-07-17
 
