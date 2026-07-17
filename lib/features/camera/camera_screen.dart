@@ -63,14 +63,14 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive) {
-      // Invalidate any outstanding discovery/initialization request before
-      // the platform tears its camera surface down.
-      _initializationGeneration++;
-    }
     final controller = _controller;
     if (controller == null) return;
     if (state == AppLifecycleState.inactive) {
+      // A runtime permission sheet also makes the app inactive before the
+      // first controller exists. Only invalidate a live camera surface here;
+      // otherwise a pending permission decision would be discarded and leave
+      // the screen loading forever.
+      _initializationGeneration++;
       controller.dispose();
       _controller = null;
     } else if (state == AppLifecycleState.resumed) {

@@ -25,8 +25,11 @@
   reached. After permission was granted, this Android 16 x64 virtual-camera
   backend stopped responding. Camera discovery and initialization now each
   time out after 12 seconds and return a retryable in-app error rather than
-  leaving a permanent loading screen. The timeout path itself still requires
-  confirmation on a responsive virtual or physical camera.
+  leaving a permanent loading screen. On a fresh later run, rejecting the
+  Android camera prompt resulted in that retryable error after the virtual
+  backend failed to return, so the bounded-error path is directly verified.
+  Successful capture still requires confirmation on a responsive virtual or
+  physical camera.
 
 ## Verification note — 2026-07-17
 
