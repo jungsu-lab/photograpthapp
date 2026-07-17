@@ -10,14 +10,21 @@ import '../../domain/models/photo_preset.dart';
 import '../../domain/models/selected_photo.dart';
 import '../../services/device_settings_service.dart';
 import '../../services/device_pose_service.dart';
+import '../../services/camera_permission_service.dart';
 import '../../services/photo_input_service.dart';
 import '../editor/editor_screen.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key, this.template, this.initialPresetId});
+  const CameraScreen({
+    super.key,
+    this.template,
+    this.initialPresetId,
+    this.cameraPermissions,
+  });
 
   final CompositionTemplate? template;
   final String? initialPresetId;
+  final CameraPermissionService? cameraPermissions;
 
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -28,6 +35,7 @@ class _CameraScreenState extends State<CameraScreen>
   final _photoInput = PhotoInputService();
   final _deviceSettings = const PlatformDeviceSettingsService();
   final DevicePoseService _devicePose = const PlatformDevicePoseService();
+  late final CameraPermissionService _cameraPermissions;
   CameraController? _controller;
   StreamSubscription<DevicePoseReading>? _poseSubscription;
   List<CameraDescription> _cameras = const [];
@@ -47,6 +55,8 @@ class _CameraScreenState extends State<CameraScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _cameraPermissions =
+        widget.cameraPermissions ?? const PlatformCameraPermissionService();
     _mode = widget.template?.name ?? _mode;
     _startPoseCoaching();
     _initializeCamera();
@@ -66,14 +76,12 @@ class _CameraScreenState extends State<CameraScreen>
     final controller = _controller;
     if (controller == null) return;
     if (state == AppLifecycleState.inactive) {
-      // A runtime permission sheet also makes the app inactive before the
-      // first controller exists. Only invalidate a live camera surface here;
-      // otherwise a pending permission decision would be discarded and leave
-      // the screen loading forever.
       _initializationGeneration++;
       controller.dispose();
       _controller = null;
     } else if (state == AppLifecycleState.resumed) {
+      // Permission handling is awaited before controller creation. A live
+      // surface alone needs to be recreated after the app returns.
       _initializeCamera();
     }
   }
@@ -87,6 +95,12 @@ class _CameraScreenState extends State<CameraScreen>
     });
     CameraController? next;
     try {
+      final permission = await _cameraPermissions.requestCamera();
+      if (!_isCurrentInitialization(generation)) return;
+      if (permission != CameraPermissionStatus.granted) {
+        _showCameraPermissionError(permission);
+        return;
+      }
       _cameras = await availableCameras().timeout(_initializationTimeout);
       if (!_isCurrentInitialization(generation)) return;
       if (_cameras.isEmpty) {
@@ -139,6 +153,22 @@ class _CameraScreenState extends State<CameraScreen>
 
   bool _isCurrentInitialization(int generation) =>
       mounted && generation == _initializationGeneration;
+
+  void _showCameraPermissionError(CameraPermissionStatus permission) {
+    final locked =
+        permission == CameraPermissionStatus.permanentlyDenied ||
+        permission == CameraPermissionStatus.restricted;
+    setState(() {
+      _cameraPermissionLocked = locked;
+      _cameraError = switch (permission) {
+        CameraPermissionStatus.permanentlyDenied =>
+          '카메라 권한이 꺼져 있어요. 설정에서 접근을 허용해 주세요.',
+        CameraPermissionStatus.restricted => '이 기기에서는 카메라 접근이 제한되어 있어요.',
+        CameraPermissionStatus.denied => '카메라 권한이 필요해요. 허용한 뒤 다시 시도해 주세요.',
+        CameraPermissionStatus.granted => null,
+      };
+    });
+  }
 
   CameraDescription _preferredCamera() {
     final template = widget.template;

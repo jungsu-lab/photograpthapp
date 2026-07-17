@@ -45,7 +45,7 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 51 passing tests. The suite
+  `flutter test --concurrency=1` completed with 53 passing tests. The suite
   now verifies that Gallery and system-share failures are propagated safely
   while temporary output cleanup remains under the caller's control, and
   protects the Android/iOS least-privilege permission configuration, and
@@ -61,11 +61,16 @@
   window services. A clean later boot completed, and the successful
   installation and interactive flow are recorded above.
 - The current ARM64 APK was rebuilt after the initial-preset history, Home
-  refresh, and system-transcoded HEIC input fixes.
-  `FrameFit-arm64-heic-release-20260717.apk` is 19.6MB;
+  refresh, system-transcoded HEIC input fixes, and direct camera-permission
+  handling.
+  `FrameFit-arm64-permission-release-20260717.apk` is 19.6MB;
   SHA-256 is
-  `2C9503C99B5B39A4F3EFFBA706979EDF53D567A780367B2047A12FD6EDBA13F2`,
+  `B81600B38C4C862117D681C69342AF8E79473FC928A8735A9381CEF33E094EE6`,
   and its Android APK Signature Scheme v2 signature verified successfully.
+- On a clean Android 16 x64 install, FrameFit requested camera access only
+  after `카메라로 촬영` was tapped. Rejecting that prompt returned to the app
+  with the specific retryable permission message rather than a camera-backend
+  timeout. Widget tests cover the permanent-denial settings action.
 
 갱신일: 2026-07-16
 
