@@ -59,12 +59,10 @@
 - An earlier x64 emulator boot attempt did not finish Android's package and
   window services. A clean later boot completed, and the successful
   installation and interactive flow are recorded above.
-- The current ARM64 APK was rebuilt successfully after the home screen's
-  recent-preset label was made accurate, the camera initialization timeout
-  and stale-request protection were added, and abandoned temporary exports
-  were made cleanup-safe. Legacy storage permissions are now limited to
-  Android 9 and below. Its SHA-256 is
-  `FB5050DEBFCCA7B052ED9501E7A1F0D8DB124BC778E7E707F7079CC33A3718B4`,
+- The current ARM64 APK was rebuilt after the initial-preset history and
+  Home refresh fixes. `FrameFit-arm64-release-20260717.apk` is 19.6MB;
+  SHA-256 is
+  `B79353A65F1AC302FA9BD85A67EB99D2F13BD9A3627F8A3EBB13E8CFF9410867`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
@@ -111,8 +109,8 @@
 
 ## 최신 Android 배포 파일
 
-- `FrameFit-arm64-release.apk`: Galaxy S23 등 arm64 기기용
-- 2026-07-16 생성 크기: 약 19.2MB
+- `FrameFit-arm64-release-20260717.apk`: Galaxy S23 등 arm64 기기용
+- 2026-07-17 생성 크기: 약 19.6MB
 - ABI 분리 release 빌드라 디버그 범용 APK보다 작다.
 - 현재 APK는 실기기 테스트용 디버그 키로 서명되며 공개 배포용은 아니다.
 
