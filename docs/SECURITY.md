@@ -21,6 +21,8 @@ sent to a service, written to analytics, or committed to this repository.
 
 - Request camera or photo access only after the corresponding user action.
 - Preserve the source file; editing must produce a separate output.
+- Validate file signatures, encoded size, and image dimensions before full
+  decoding so malformed or decompression-bomb inputs cannot exhaust memory.
 - Strip location and ancillary JPEG metadata from exports by default.
 - Delete temporary export files after save, share, cancellation, or failure
   whenever the platform no longer needs the file.

@@ -7,7 +7,8 @@ then save or share a new file.
 
 ## What works today
 
-- Choose a real JPEG or PNG from the system photo picker.
+- Choose a real JPEG or PNG from the system photo picker. Inputs are capped
+  at 40 MB, 10,000 px per side, and 40 megapixels before full pixel decoding.
 - Capture a photo with the in-app front or rear camera.
 - Start either route directly from onboarding; permissions are requested only
   after the chosen action.

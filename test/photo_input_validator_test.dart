@@ -1,10 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:image/image.dart' as img;
 import 'package:test/test.dart';
 
 import 'package:framefit/services/photo_input_service.dart';
 
 void main() {
-  const jpeg = <int>[0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10];
-  const png = <int>[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  final jpeg = Uint8List.fromList(img.encodeJpg(img.Image(width: 4, height: 3)));
+  final png = Uint8List.fromList(img.encodePng(img.Image(width: 4, height: 3)));
 
   test('accepts matching JPEG and PNG signatures', () {
     expect(
@@ -47,6 +50,17 @@ void main() {
     expect(
       PhotoInputValidator.normalizedName('picked-image', PhotoInputFormat.png),
       'picked-image.png',
+    );
+  });
+
+  test('rejects images whose decoded dimensions would use too much memory', () {
+    final oversized = Uint8List.fromList(
+      img.encodePng(img.Image(width: PhotoInputValidator.maximumDimension + 1, height: 1)),
+    );
+
+    expect(
+      () => PhotoInputValidator.validate(fileName: 'wide.png', bytes: oversized),
+      throwsA(isA<PhotoInputException>()),
     );
   });
 }

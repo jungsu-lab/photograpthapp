@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../domain/models/selected_photo.dart';
@@ -69,6 +72,8 @@ enum PhotoInputFormat { jpeg, png }
 /// transparent PNG as an unexpected JPEG later in the edit flow.
 class PhotoInputValidator {
   static const maximumInputBytes = 40 * 1024 * 1024;
+  static const maximumDimension = 10000;
+  static const maximumPixels = 40 * 1000 * 1000;
 
   static PhotoInputFormat validate({
     required String fileName,
@@ -94,7 +99,33 @@ class PhotoInputValidator {
         '파일 이름과 실제 사진 형식이 일치하지 않아요. JPEG 또는 PNG 원본을 다시 선택해 주세요.',
       );
     }
+    _validateDimensions(bytes, format);
     return format;
+  }
+
+  /// Reads only image headers before handing the file to the pixel renderer.
+  /// This keeps a small, highly-compressed image from expanding into an
+  /// unreasonable bitmap allocation later in the editing flow.
+  static void _validateDimensions(List<int> bytes, PhotoInputFormat format) {
+    final data = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+    final decoder = switch (format) {
+      PhotoInputFormat.jpeg => img.JpegDecoder(),
+      PhotoInputFormat.png => img.PngDecoder(),
+    };
+    final info = decoder.startDecode(data);
+    if (info == null || info.width < 1 || info.height < 1) {
+      throw const PhotoInputException(
+        '사진 크기를 읽을 수 없어요. 다른 JPEG 또는 PNG를 선택해 주세요.',
+      );
+    }
+    final pixels = info.width * info.height;
+    if (info.width > maximumDimension ||
+        info.height > maximumDimension ||
+        pixels > maximumPixels) {
+      throw const PhotoInputException(
+        '사진 해상도가 너무 커서 열 수 없어요. 긴 변 10000px·4000만 화소 이하의 JPEG 또는 PNG를 선택해 주세요.',
+      );
+    }
   }
 
   static String normalizedName(String fileName, PhotoInputFormat format) {
