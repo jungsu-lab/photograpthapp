@@ -34,4 +34,18 @@ void main() {
     expect(plist, contains('<key>NSMotionUsageDescription</key>'));
     expect(plist, contains('only when you choose'));
   });
+
+  test('iOS project keeps the Swift Package permission integration eligible',
+      () async {
+    final project = await File(
+      'ios/Runner.xcodeproj/project.pbxproj',
+    ).readAsString();
+
+    // Flutter's current iOS template resolves plugins through Swift Package
+    // Manager. permission_handler_apple requires iOS 12+, while FrameFit
+    // deliberately supports iOS 13 and keeps the generated package attached.
+    expect(project, contains('IPHONEOS_DEPLOYMENT_TARGET = 13.0;'));
+    expect(project, contains('FlutterGeneratedPluginSwiftPackage'));
+    expect(project, contains('packageProductDependencies'));
+  });
 }

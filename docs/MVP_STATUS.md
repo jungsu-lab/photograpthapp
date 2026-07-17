@@ -45,14 +45,15 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 53 passing tests. The suite
+  `flutter test --concurrency=1` completed with 54 passing tests. The suite
   now verifies that Gallery and system-share failures are propagated safely
   while temporary output cleanup remains under the caller's control, and
   protects the Android/iOS least-privilege permission configuration, and
   includes visual baselines for Home and compact/large onboarding layouts.
   It also verifies that an initially applied preset is recorded and that
   returning to Home refreshes the recent-preset list, plus safe handling of a
-  system-transcoded HEIC JPEG.
+  system-transcoded HEIC JPEG. It also protects the iOS 13 Swift Package
+  integration needed by the explicit camera-permission request.
   Both ran
   from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
   set to ASCII paths; the default Unicode Windows user path can stall Flutter
