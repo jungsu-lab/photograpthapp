@@ -1,5 +1,18 @@
 # FrameFit MVP 상태 기록
 
+## Android emulator verification — 2026-07-17
+
+- A fresh x64 debug APK was installed and launched successfully on the local
+  `FrameFit_36` Android 16 emulator.
+- The user flow was exercised with a generated test PNG: onboarding skip →
+  Home → Android system Photo Picker → real editor → preset application →
+  PNG export → Gallery save.
+- Android's picker displayed its selected-photos privacy notice. The exported
+  file was confirmed through MediaStore as
+  `Pictures/FrameFit/FrameFit-23-20260717053442271464.png`.
+- This is emulator evidence, not a substitute for a physical-device camera,
+  host-camera configuration, third-party share target, or iOS validation.
+
 ## Verification note — 2026-07-17
 
 - The ARM64 release APK was rebuilt successfully and its APK Signature Scheme
@@ -16,9 +29,9 @@
   from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
   set to ASCII paths; the default Unicode Windows user path can stall Flutter
   test compilation on this workstation.
-- A local x64 debug APK was built successfully on 2026-07-17. Its emulator
-  image did not finish starting Android's package and window services, so no
-  emulator installation or interactive-flow result is claimed from that run.
+- An earlier x64 emulator boot attempt did not finish Android's package and
+  window services. A clean later boot completed, and the successful
+  installation and interactive flow are recorded above.
 - The current ARM64 APK was rebuilt successfully after the home screen's
   recent-preset label was made accurate. Its SHA-256 is
   `71B33DF4BE1AA7810F2D97BEEBCB7B0E9D6A5C3CBCE60BA2ACA59ACE49522309`,
