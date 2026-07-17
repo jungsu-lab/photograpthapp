@@ -5,6 +5,7 @@ void main() {
   test('preset JSON round trip preserves validated numeric recipe data', () {
     const preset = PhotoPreset(
       id: 'test',
+      thumbnailAsset: 'assets/images/preset-previews/test.jpg',
       name: 'Test',
       description: 'Round trip',
       category: PresetCategory.cameraEffect,
@@ -18,6 +19,7 @@ void main() {
     final restored = PhotoPreset.fromJson(preset.toJson());
 
     expect(restored.id, preset.id);
+    expect(restored.thumbnailAsset, preset.thumbnailAsset);
     expect(restored.recipe, preset.recipe);
     expect(restored.defaultIntensity, .8);
     expect(restored.recommendedSubjects, ['landscape']);

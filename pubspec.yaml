@@ -71,11 +71,41 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/japan_travel_preview.webp
-    - assets/images/preset-portrait-preview.webp
-    - assets/images/preset-food-preview.webp
-    - assets/images/preset-product-preview.webp
-    - assets/images/composition/kyoto-film-cover.jpg
+    - assets/images/composition/backlit-silhouette.jpg
+    - assets/images/composition/clean-product.jpg
+    - assets/images/composition/diagonal-product.jpg
+    - assets/images/composition/flash-portrait.jpg
+    - assets/images/composition/foreground-depth.jpg
+    - assets/images/composition/frame-within-frame.jpg
+    - assets/images/composition/group-triangle.jpg
+    - assets/images/composition/leading-lines.jpg
+    - assets/images/composition/low-angle-full-body.jpg
+    - assets/images/composition/mirror-selfie.jpg
+    - assets/images/composition/negative-space.jpg
+    - assets/images/composition/reflection-city.jpg
+    - assets/images/composition/symmetry-portrait.jpg
+    - assets/images/composition/symmetry-space.jpg
+    - assets/images/composition/table-45.jpg
+    - assets/images/composition/thirds-portrait.jpg
+    - assets/images/composition/top-down-table.jpg
+    - assets/images/composition/travel-back-view.jpg
+    - assets/images/composition/wide-friends.jpg
+    - assets/images/composition/window-reflection.jpg
+    - assets/images/preset-previews/after-rain-glow.jpg
+    - assets/images/preset-previews/cel-sky.jpg
+    - assets/images/preset-previews/clear-detail.jpg
+    - assets/images/preset-previews/compact-ccd.jpg
+    - assets/images/preset-previews/convenience-flash.jpg
+    - assets/images/preset-previews/high-contrast-monochrome.jpg
+    - assets/images/preset-previews/kyoto-film.jpg
+    - assets/images/preset-previews/morning-kissa.jpg
+    - assets/images/preset-previews/natural-correction.jpg
+    - assets/images/preset-previews/rainy-alley.jpg
+    - assets/images/preset-previews/soft-light.jpg
+    - assets/images/preset-previews/soft-monochrome.jpg
+    - assets/images/preset-previews/sunset-memory.jpg
+    - assets/images/preset-previews/tokyo-neon.jpg
+    - assets/images/preset-previews/warm-skin.jpg
 
   fonts:
     - family: KimjungchulMyungjo

@@ -424,13 +424,13 @@ class _PresetPreviewCard extends StatelessWidget {
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Color(preset.swatch).withValues(alpha: .18),
+                        color: Color(preset.swatch).withValues(alpha: 0),
                       ),
                     ),
                     if (preset.category == PresetCategory.japanTravel)
                       DecoratedBox(
                         decoration: BoxDecoration(
-                          color: const Color(0x22000000),
+                          color: const Color(0x00000000),
                         ),
                       ),
                     Padding(

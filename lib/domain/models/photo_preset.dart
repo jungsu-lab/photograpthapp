@@ -203,6 +203,7 @@ class PresetRecipe {
 class PhotoPreset {
   const PhotoPreset({
     required this.id,
+    required this.thumbnailAsset,
     required this.name,
     required this.description,
     required this.category,
@@ -214,6 +215,11 @@ class PhotoPreset {
   });
 
   final String id;
+
+  /// A pre-rendered sample made with [PhotoProcessor] and this preset's
+  /// default intensity. The library never simulates a filter with a colour
+  /// overlay, so this remains an honest preview of the real edit result.
+  final String thumbnailAsset;
   final String name;
   final String description;
   final PresetCategory category;
@@ -225,6 +231,7 @@ class PhotoPreset {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'thumbnailAsset': thumbnailAsset,
     'name': name,
     'description': description,
     'category': category.name,
@@ -247,6 +254,7 @@ class PhotoPreset {
     }
     return PhotoPreset(
       id: json['id'] as String? ?? '',
+      thumbnailAsset: json['thumbnailAsset'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
       category: category,

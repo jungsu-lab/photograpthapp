@@ -7,6 +7,7 @@ import '../../domain/models/photo_preset.dart';
 const presetCatalog = <PhotoPreset>[
   PhotoPreset(
     id: 'natural-correction',
+    thumbnailAsset: 'assets/images/preset-previews/natural-correction.jpg',
     name: '자연 보정',
     description: '밝기와 명암을 무리 없이 정돈하는 기본 보정이에요.',
     category: PresetCategory.correction,
@@ -24,6 +25,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'soft-light',
+    thumbnailAsset: 'assets/images/preset-previews/soft-light.jpg',
     name: '부드러운 빛',
     description: '강한 빛과 그림자를 눌러 편안한 인상을 만들어요.',
     category: PresetCategory.correction,
@@ -41,6 +43,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'clear-detail',
+    thumbnailAsset: 'assets/images/preset-previews/clear-detail.jpg',
     name: '맑고 선명하게',
     description: '색은 자연스럽게 두고 흐릿한 디테일만 살려요.',
     category: PresetCategory.correction,
@@ -56,6 +59,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'warm-skin',
+    thumbnailAsset: 'assets/images/preset-previews/warm-skin.jpg',
     name: '따뜻한 피부톤',
     description: '피부색을 과장하지 않고 온기만 살짝 더해요.',
     category: PresetCategory.correction,
@@ -73,6 +77,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'kyoto-film',
+    thumbnailAsset: 'assets/images/preset-previews/kyoto-film.jpg',
     name: '교토 필름',
     description: '따뜻한 나무색과 바랜 하이라이트를 담백하게 남겨요.',
     category: PresetCategory.japanTravel,
@@ -93,6 +98,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'tokyo-neon',
+    thumbnailAsset: 'assets/images/preset-previews/tokyo-neon.jpg',
     name: '도쿄 네온',
     description: '차가운 밤공기 속 간판 색과 깊은 그림자를 살려요.',
     category: PresetCategory.japanTravel,
@@ -112,6 +118,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'rainy-alley',
+    thumbnailAsset: 'assets/images/preset-previews/rainy-alley.jpg',
     name: '비 오는 골목',
     description: '젖은 거리의 푸른 그림자와 조용한 공기를 표현해요.',
     category: PresetCategory.japanTravel,
@@ -132,6 +139,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'morning-kissa',
+    thumbnailAsset: 'assets/images/preset-previews/morning-kissa.jpg',
     name: '아침 킷사',
     description: '오전 카페의 크림빛 조명과 잔잔한 파스텔 톤이에요.',
     category: PresetCategory.japanTravel,
@@ -152,6 +160,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'cel-sky',
+    thumbnailAsset: 'assets/images/preset-previews/cel-sky.jpg',
     name: '셀 애니 하늘',
     description: '맑은 하늘과 또렷한 색 대비를 살린 애니메이션풍 무드예요.',
     category: PresetCategory.animeMood,
@@ -170,6 +179,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'after-rain-glow',
+    thumbnailAsset: 'assets/images/preset-previews/after-rain-glow.jpg',
     name: '비 온 뒤 빛',
     description: '젖은 거리의 푸른 그림자와 은은한 빛을 정리해요.',
     category: PresetCategory.animeMood,
@@ -189,6 +199,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'sunset-memory',
+    thumbnailAsset: 'assets/images/preset-previews/sunset-memory.jpg',
     name: '노을 장면',
     description: '주황빛 하이라이트와 차분한 그림자로 기억 같은 장면을 만들어요.',
     category: PresetCategory.animeMood,
@@ -209,6 +220,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'compact-ccd',
+    thumbnailAsset: 'assets/images/preset-previews/compact-ccd.jpg',
     name: '주말 디카',
     description: '2000년대 컴팩트 카메라처럼 작고 또렷한 여행 기록.',
     category: PresetCategory.cameraEffect,
@@ -227,6 +239,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'convenience-flash',
+    thumbnailAsset: 'assets/images/preset-previews/convenience-flash.jpg',
     name: '편의점 플래시',
     description: '밤의 직광 플래시처럼 피사체는 밝고 배경은 깊게.',
     category: PresetCategory.cameraEffect,
@@ -246,6 +259,7 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'soft-monochrome',
+    thumbnailAsset: 'assets/images/preset-previews/soft-monochrome.jpg',
     name: '소프트 흑백',
     description: '회색의 층을 남긴 부드러운 흑백 필름 느낌이에요.',
     category: PresetCategory.monochrome,
@@ -262,6 +276,8 @@ const presetCatalog = <PhotoPreset>[
   ),
   PhotoPreset(
     id: 'high-contrast-monochrome',
+    thumbnailAsset:
+        'assets/images/preset-previews/high-contrast-monochrome.jpg',
     name: '하이콘 흑백',
     description: '빛과 형태가 강하게 남는 스냅 흑백 효과예요.',
     category: PresetCategory.monochrome,

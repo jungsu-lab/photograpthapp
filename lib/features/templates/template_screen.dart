@@ -305,7 +305,7 @@ class _PresetLibraryCard extends StatelessWidget {
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Color(preset.swatch).withValues(alpha: .18),
+                        color: Color(preset.swatch).withValues(alpha: 0),
                       ),
                     ),
                     if (preset.category == PresetCategory.japanTravel)
@@ -314,7 +314,7 @@ class _PresetLibraryCard extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               const Color(0x18000000),
-                              Color(preset.swatch).withValues(alpha: .35),
+                              Color(preset.swatch).withValues(alpha: 0),
                             ],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,

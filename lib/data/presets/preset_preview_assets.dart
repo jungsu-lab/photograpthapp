@@ -1,20 +1,10 @@
 import '../../domain/models/photo_preset.dart';
 
-/// Real example imagery for the preset library. These are app-owned generated
-/// fixtures, never user photos, and keep the library photo-first before a
-/// user selects an image of their own.
-String presetPreviewAsset(PhotoPreset preset) {
-  if (preset.id == 'clear-detail') {
-    return 'assets/images/preset-product-preview.webp';
-  }
-  return switch (preset.category) {
-    PresetCategory.correction => 'assets/images/preset-portrait-preview.webp',
-    PresetCategory.japanTravel => 'assets/images/japan_travel_preview.webp',
-    PresetCategory.animeMood => 'assets/images/japan_travel_preview.webp',
-    PresetCategory.cameraEffect => 'assets/images/preset-food-preview.webp',
-    PresetCategory.monochrome => 'assets/images/preset-portrait-preview.webp',
-  };
-}
+/// The sample is rendered offline with the same [PhotoProcessor] used in the
+/// editor. It is deliberately stored per preset instead of recolouring one
+/// generic card at runtime.
+String presetPreviewAsset(PhotoPreset preset) => preset.thumbnailAsset;
 
-bool isMonochromePreview(PhotoPreset preset) =>
-    preset.category == PresetCategory.monochrome;
+/// Monochrome conversion is already part of the rendered asset. Applying a
+/// widget-level filter here would make the library disagree with the editor.
+bool isMonochromePreview(PhotoPreset preset) => false;
