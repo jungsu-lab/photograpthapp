@@ -40,6 +40,7 @@ class _CameraScreenState extends State<CameraScreen>
   DevicePoseGuidance? _poseGuidance;
 
   static const _modes = ['인물', '셀카', '음식', '여행', '상품', '감성'];
+  static const _initializationTimeout = Duration(seconds: 12);
 
   @override
   void initState() {
@@ -76,19 +77,20 @@ class _CameraScreenState extends State<CameraScreen>
       _cameraError = null;
       _cameraPermissionLocked = false;
     });
+    CameraController? next;
     try {
-      _cameras = await availableCameras();
+      _cameras = await availableCameras().timeout(_initializationTimeout);
       if (_cameras.isEmpty) {
         throw CameraException('no-camera', '사용 가능한 카메라가 없어요.');
       }
       final camera = preferred ?? _preferredCamera();
-      final next = CameraController(
+      next = CameraController(
         camera,
         ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
-      await next.initialize();
+      await next.initialize().timeout(_initializationTimeout);
       await _applyTemplateCameraSettings(next);
       final old = _controller;
       if (!mounted) {
@@ -97,7 +99,16 @@ class _CameraScreenState extends State<CameraScreen>
       }
       setState(() => _controller = next);
       await old?.dispose();
+    } on TimeoutException {
+      await next?.dispose();
+      if (mounted) {
+        setState(
+          () => _cameraError =
+              '카메라 응답이 늦어요. 다른 앱에서 카메라를 사용 중인지 확인한 뒤 다시 시도해 주세요.',
+        );
+      }
     } on CameraException catch (error) {
+      await next?.dispose();
       if (mounted) {
         setState(() {
           _cameraError = _cameraMessage(error);
@@ -106,6 +117,7 @@ class _CameraScreenState extends State<CameraScreen>
         });
       }
     } catch (_) {
+      await next?.dispose();
       if (mounted) {
         setState(() => _cameraError = '카메라를 시작하지 못했어요. 권한을 확인해 주세요.');
       }

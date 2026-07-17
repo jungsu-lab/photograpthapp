@@ -14,6 +14,12 @@
   and available share targets.
 - This is emulator evidence, not a substitute for a physical-device camera,
   host-camera configuration, a receiving third-party app, or iOS validation.
+- During the composition-camera flow, Android's camera permission prompt was
+  reached. After permission was granted, this Android 16 x64 virtual-camera
+  backend stopped responding. Camera discovery and initialization now each
+  time out after 12 seconds and return a retryable in-app error rather than
+  leaving a permanent loading screen. The timeout path itself still requires
+  confirmation on a responsive virtual or physical camera.
 
 ## Verification note — 2026-07-17
 
@@ -35,8 +41,9 @@
   window services. A clean later boot completed, and the successful
   installation and interactive flow are recorded above.
 - The current ARM64 APK was rebuilt successfully after the home screen's
-  recent-preset label was made accurate. Its SHA-256 is
-  `71B33DF4BE1AA7810F2D97BEEBCB7B0E9D6A5C3CBCE60BA2ACA59ACE49522309`,
+  recent-preset label was made accurate and the camera initialization timeout
+  was added. Its SHA-256 is
+  `75435C2D9A76E145894BFB04CD7BACE68A89FCB4BAAD508D75AB148C96099E2D`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
