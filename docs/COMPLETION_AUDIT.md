@@ -28,8 +28,9 @@
 - Android 16 에뮬레이터에 최신 x64 APK를 재설치해 `도쿄 네온` 선택 →
   실제 사진 선택 → 편집기 적용 → 홈 복귀 → 최근 프리셋 즉시 표시를
   직접 확인했다.
-- GitHub Actions 실행 #3은 Linux Android 분석·기능 테스트·디버그 APK
-  빌드와 Windows 화면 비교 테스트를 모두 성공으로 마쳤다.
+- GitHub Actions 실행 #9(커밋 `9245e52`)은 최신 권한 처리 코드를 대상으로
+  Linux Android 분석·기능 테스트·디버그 APK 빌드와 Windows 화면 비교 테스트를
+  모두 성공으로 마쳤다.
 - 최신 ARM64 릴리스 APK는 APK Signature Scheme v2 서명을 통과했다.
   `FrameFit-arm64-permission-release-20260717.apk`의 SHA-256은
   `B81600B38C4C862117D681C69342AF8E79473FC928A8735A9381CEF33E094EE6`이다.
@@ -43,8 +44,6 @@
 - 세로 EXIF JPEG, 투명 PNG, 잘못된 파일, 저장 실패 및 대상 앱 수신을
   실제 기기에서 확인한다.
 - iPhone 실기기에서 사진 선택·카메라·저장·공유를 확인한다.
-- GitHub Actions에서 분리된 Linux 기능/빌드 작업과 Windows 화면 비교
-  작업이 모두 통과하는지 확인한다.
 
 따라서 현재 상태를 **실사용 Android MVP에 가까운 구현 상태**로 보되,
 위 직접 검증 항목까지 끝나기 전에는 모든 플랫폼에서 최종 완료라고
