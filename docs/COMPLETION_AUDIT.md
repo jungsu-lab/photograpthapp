@@ -28,6 +28,8 @@
 - Android 16 에뮬레이터에 최신 x64 APK를 재설치해 `도쿄 네온` 선택 →
   실제 사진 선택 → 편집기 적용 → 홈 복귀 → 최근 프리셋 즉시 표시를
   직접 확인했다.
+- GitHub Actions 실행 #3은 Linux Android 분석·기능 테스트·디버그 APK
+  빌드와 Windows 화면 비교 테스트를 모두 성공으로 마쳤다.
 - 최신 ARM64 릴리스 APK는 APK Signature Scheme v2 서명을 통과했다.
   SHA-256은 `FB5050DEBFCCA7B052ED9501E7A1F0D8DB124BC778E7E707F7079CC33A3718B4`이다.
 

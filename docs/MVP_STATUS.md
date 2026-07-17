@@ -34,6 +34,9 @@
   Choosing `도쿄 네온` before photo import opened the real editor with that
   preset applied, persisted `tokyo-neon` locally, and showed it immediately in
   Home's recent-preset chip after returning through the bottom navigation.
+- GitHub Actions run #3 for commit `250ee97` completed successfully: the
+  Linux Android job passed analysis, non-golden tests, and a debug APK build;
+  the Windows job passed all three visual-baseline tests.
 
 ## Verification note — 2026-07-17
 
