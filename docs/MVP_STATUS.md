@@ -71,6 +71,11 @@
   after `카메라로 촬영` was tapped. Rejecting that prompt returned to the app
   with the specific retryable permission message rather than a camera-backend
   timeout. Widget tests cover the permanent-denial settings action.
+- On the same emulator, granting the camera permission opened the virtual
+  camera successfully. A captured JPEG reached the editor, received the
+  `자연 보정` preset, and was exported at original resolution as
+  `FrameFit-CAP1602257483228859603-20260717095727358313.jpg`. MediaStore
+  confirmed the saved result under `Pictures/FrameFit/`.
 
 갱신일: 2026-07-16
 
