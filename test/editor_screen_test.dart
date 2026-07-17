@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:framefit/domain/models/selected_photo.dart';
 import 'package:framefit/data/presets/preset_catalog.dart';
 import 'package:framefit/features/editor/editor_screen.dart';
+import 'package:framefit/services/photo_export_service.dart';
 import 'package:framefit/services/photo_processor.dart';
 
 class _ImmediatePhotoProcessor extends PhotoProcessor {
@@ -211,5 +213,45 @@ void main() {
           .onPressed,
       isNotNull,
     );
+  });
+
+  testWidgets('a gallery save failure returns safely to the editor', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final directory = await Directory.systemTemp.createTemp('framefit-editor-');
+    addTearDown(() => directory.delete(recursive: true));
+    final exporter = PhotoExportService(
+      temporaryDirectory: () async => directory,
+      saveToGallery: (_) async => throw StateError('gallery unavailable'),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          exporter: exporter,
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('exportButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('createExportButton')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithIcon(FilledButton, Icons.download));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(await directory.list().isEmpty, isTrue);
+    expect(find.byKey(const Key('exportButton')), findsOneWidget);
   });
 }
