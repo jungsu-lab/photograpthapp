@@ -7,7 +7,7 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 42 passing tests. The suite
+  `flutter test --concurrency=1` completed with 44 passing tests. The suite
   now verifies that Gallery and system-share failures are propagated safely
   while temporary output cleanup remains under the caller's control, and
   protects the Android/iOS least-privilege permission configuration. Both ran
