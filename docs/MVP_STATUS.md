@@ -7,10 +7,12 @@
 - Preset model, preset catalogue, composition catalogue, and real JPEG/PNG
   processor tests passed using the standalone Dart test runner.
 - On 2026-07-17, `flutter analyze` completed with no issues and
-  `flutter test --concurrency=1` completed with 44 passing tests. The suite
+  `flutter test --concurrency=1` completed with 47 passing tests. The suite
   now verifies that Gallery and system-share failures are propagated safely
   while temporary output cleanup remains under the caller's control, and
-  protects the Android/iOS least-privilege permission configuration. Both ran
+  protects the Android/iOS least-privilege permission configuration, and
+  includes visual baselines for Home and compact/large onboarding layouts.
+  Both ran
   from an ASCII-only temporary checkout with `TEMP`, `TMP`, and `PUB_CACHE`
   set to ASCII paths; the default Unicode Windows user path can stall Flutter
   test compilation on this workstation.
