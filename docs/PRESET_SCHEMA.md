@@ -11,8 +11,9 @@ not apply to the editor.
 id: String                       # stable, unique, kebab-case identifier
 name: String                     # user-facing preset name
 description: String              # concise expectation-setting copy
-category: PresetCategory         # correction | japanTravel | animeMood |
-                                # cameraEffect | monochrome
+category: PresetCategory         # correction | portraitTone | japanTravel |
+                                # animeMood | filmTone | cameraEffect |
+                                # monochrome
 recipe: PresetRecipe             # numeric colour recipe below
 swatch: int                      # ARGB UI fallback colour
 defaultIntensity: double         # 0.0 to 1.0

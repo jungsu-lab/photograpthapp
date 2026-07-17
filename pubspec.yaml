@@ -92,20 +92,28 @@ flutter:
     - assets/images/composition/wide-friends.jpg
     - assets/images/composition/window-reflection.jpg
     - assets/images/preset-previews/after-rain-glow.jpg
+    - assets/images/preset-previews/backlight-recovery.jpg
     - assets/images/preset-previews/cel-sky.jpg
+    - assets/images/preset-previews/classic-negative.jpg
     - assets/images/preset-previews/clear-detail.jpg
+    - assets/images/preset-previews/clean-portrait.jpg
     - assets/images/preset-previews/compact-ccd.jpg
     - assets/images/preset-previews/convenience-flash.jpg
+    - assets/images/preset-previews/cool-portrait.jpg
+    - assets/images/preset-previews/deep-contrast.jpg
     - assets/images/preset-previews/high-contrast-monochrome.jpg
     - assets/images/preset-previews/kyoto-film.jpg
     - assets/images/preset-previews/morning-kissa.jpg
+    - assets/images/preset-previews/muted-cinema.jpg
     - assets/images/preset-previews/natural-correction.jpg
+    - assets/images/preset-previews/peach-portrait.jpg
     - assets/images/preset-previews/rainy-alley.jpg
     - assets/images/preset-previews/soft-light.jpg
     - assets/images/preset-previews/soft-monochrome.jpg
     - assets/images/preset-previews/sunset-memory.jpg
     - assets/images/preset-previews/tokyo-neon.jpg
     - assets/images/preset-previews/warm-skin.jpg
+    - assets/images/preset-previews/warm-disposable.jpg
 
   fonts:
     - family: KimjungchulMyungjo

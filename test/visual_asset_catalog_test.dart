@@ -24,8 +24,8 @@ void main() {
   test('every preset card points to a unique rendered thumbnail', () {
     final assets = presetCatalog.map((preset) => preset.thumbnailAsset);
 
-    expect(assets.length, 15);
-    expect(assets.toSet().length, 15);
+    expect(assets.length, 23);
+    expect(assets.toSet().length, 23);
     for (final asset in assets) {
       expect(asset, startsWith('assets/images/preset-previews/'));
       final decoded = img.decodeImage(File(asset).readAsBytesSync());

@@ -495,7 +495,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     ],
                   ),
                   SizedBox(
-                    height: 176,
+                    height: 216,
                     child: _tab == 0
                         ? _PresetPanel(
                             settings: _settings,
@@ -581,7 +581,7 @@ class _EditorTab extends StatelessWidget {
   );
 }
 
-class _PresetPanel extends StatelessWidget {
+class _PresetPanel extends StatefulWidget {
   const _PresetPanel({
     required this.settings,
     required this.originalBytes,
@@ -598,16 +598,82 @@ class _PresetPanel extends StatelessWidget {
   final ValueChanged<double> onIntensity;
 
   @override
+  State<_PresetPanel> createState() => _PresetPanelState();
+}
+
+class _PresetPanelState extends State<_PresetPanel> {
+  PresetCategory? _selectedCategory;
+
+  @override
   Widget build(BuildContext context) {
-    final orderedPresets = [...presetCatalog];
+    final settings = widget.settings;
+    final originalBytes = widget.originalBytes;
+    final thumbnailFor = widget.thumbnailFor;
+    final onSelect = widget.onSelect;
+    final onOriginal = widget.onOriginal;
+    final onIntensity = widget.onIntensity;
+    final orderedPresets = presetCatalog
+        .where(
+          (preset) =>
+              _selectedCategory == null || preset.category == _selectedCategory,
+        )
+        .toList();
     final selectedPreset = settings.preset;
-    if (selectedPreset != null) {
+    if (selectedPreset != null &&
+        (_selectedCategory == null ||
+            selectedPreset.category == _selectedCategory)) {
       orderedPresets.removeWhere((preset) => preset.id == selectedPreset.id);
       orderedPresets.insert(0, selectedPreset);
     }
 
     return Column(
       children: [
+        SizedBox(
+          height: 38,
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            children: [
+              ChoiceChip(
+                label: const Text('전체'),
+                selected: _selectedCategory == null,
+                selectedColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: _selectedCategory == null
+                      ? const Color(0xFF111111)
+                      : Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+                backgroundColor: const Color(0xFF333333),
+                side: BorderSide.none,
+                onSelected: (_) => setState(() => _selectedCategory = null),
+              ),
+              const SizedBox(width: 8),
+              ...PresetCategory.values.map(
+                (category) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(category.label),
+                    selected: _selectedCategory == category,
+                    selectedColor: Colors.white,
+                    labelStyle: TextStyle(
+                      color: _selectedCategory == category
+                          ? const Color(0xFF111111)
+                          : Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    backgroundColor: const Color(0xFF333333),
+                    side: BorderSide.none,
+                    onSelected: (_) =>
+                        setState(() => _selectedCategory = category),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         SizedBox(
           height: 104,
           child: ListView.separated(

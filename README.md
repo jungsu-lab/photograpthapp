@@ -12,8 +12,9 @@ then save or share a new file.
 - Capture a photo with the in-app front or rear camera.
 - Start either route directly from onboarding; permissions are requested only
   after the chosen action.
-- Apply 15 numeric presets across Basic correction, Japan travel,
-  non-infringing anime mood, Camera effects, and Monochrome categories.
+- Apply 23 numeric presets across Basic correction, Portrait tone, Japan
+  travel, non-infringing anime mood, Film tone, Camera effects, and
+  Monochrome categories. The editor exposes these groups as filter chips.
 - Use a 0–100 preset strength slider; values are interpolated from the
   original settings and strength 0 is visually unchanged.
 - Make local exposure, contrast, highlights, shadows, saturation, vibrance,

@@ -2,8 +2,10 @@ import 'dart:math' as math;
 
 enum PresetCategory {
   correction,
+  portraitTone,
   japanTravel,
   animeMood,
+  filmTone,
   cameraEffect,
   monochrome,
 }
@@ -11,8 +13,10 @@ enum PresetCategory {
 extension PresetCategoryLabel on PresetCategory {
   String get label => switch (this) {
     PresetCategory.correction => '기본 보정',
+    PresetCategory.portraitTone => '인물 톤',
     PresetCategory.japanTravel => '일본 여행',
     PresetCategory.animeMood => '애니 무드',
+    PresetCategory.filmTone => '필름 톤',
     PresetCategory.cameraEffect => '촬영 효과',
     PresetCategory.monochrome => '흑백',
   };

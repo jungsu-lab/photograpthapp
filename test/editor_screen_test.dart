@@ -240,4 +240,32 @@ void main() {
       isNotNull,
     );
   });
+
+  testWidgets('editor preset menu filters distinct tone groups', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: EditorScreen(
+          processor: const _ImmediatePhotoProcessor(),
+          args: EditorArgs(
+            photo: SelectedPhoto(
+              name: 'sample.jpg',
+              bytes: sampleJpeg(),
+              source: PhotoSource.gallery,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('필름 톤'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('클래식 네거티브'), findsOneWidget);
+    expect(find.text('뮤트 시네마'), findsOneWidget);
+    expect(find.text('자연 보정'), findsNothing);
+  });
 }

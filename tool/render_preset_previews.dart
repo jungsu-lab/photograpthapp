@@ -20,18 +20,23 @@ Future<void> main() async {
   await outputDirectory.create(recursive: true);
 
   final sources = <PresetCategory, String>{
-    PresetCategory.correction:
-        'tool_assets/imagegen/framefit-woman-reference.jpg',
+    PresetCategory.correction: 'assets/images/composition/foreground-depth.jpg',
+    PresetCategory.portraitTone:
+        'assets/images/composition/foreground-depth.jpg',
     PresetCategory.japanTravel: 'tool_assets/preset-sources/travel.webp',
     PresetCategory.animeMood: 'tool_assets/preset-sources/travel.webp',
+    PresetCategory.filmTone: 'tool_assets/preset-sources/social.jpg',
     PresetCategory.cameraEffect: 'tool_assets/preset-sources/social.jpg',
-    PresetCategory.monochrome:
-        'tool_assets/imagegen/framefit-woman-reference.jpg',
+    PresetCategory.monochrome: 'assets/images/composition/foreground-depth.jpg',
+  };
+  const sourceOverrides = <String, String>{
+    'backlight-recovery': 'assets/images/composition/backlit-silhouette.jpg',
+    'convenience-flash': 'assets/images/composition/flash-portrait.jpg',
   };
   const processor = PhotoProcessor();
 
   for (final preset in presetCatalog) {
-    final sourcePath = sources[preset.category]!;
+    final sourcePath = sourceOverrides[preset.id] ?? sources[preset.category]!;
     final source = File('${root.path}${Platform.pathSeparator}$sourcePath');
     if (!await source.exists()) {
       throw StateError('Missing preset preview source: $sourcePath');

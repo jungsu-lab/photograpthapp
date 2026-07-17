@@ -7,14 +7,14 @@ void main() {
     final ids = presetCatalog.map((preset) => preset.id).toSet();
     final recipes = presetCatalog.map((preset) => preset.recipe).toSet();
 
-    expect(presetCatalog.length, greaterThanOrEqualTo(15));
+    expect(presetCatalog.length, greaterThanOrEqualTo(23));
     expect(ids, hasLength(presetCatalog.length));
     expect(recipes, hasLength(presetCatalog.length));
     expect(
       presetCatalog.where(
         (preset) => preset.category == PresetCategory.correction,
       ),
-      isNotEmpty,
+      hasLength(6),
     );
     expect(
       presetCatalog.where(
@@ -25,6 +25,18 @@ void main() {
     expect(
       presetCatalog.where(
         (preset) => preset.category == PresetCategory.animeMood,
+      ),
+      hasLength(3),
+    );
+    expect(
+      presetCatalog.where(
+        (preset) => preset.category == PresetCategory.portraitTone,
+      ),
+      hasLength(3),
+    );
+    expect(
+      presetCatalog.where(
+        (preset) => preset.category == PresetCategory.filmTone,
       ),
       hasLength(3),
     );
