@@ -46,9 +46,9 @@
   installation and interactive flow are recorded above.
 - The current ARM64 APK was rebuilt successfully after the home screen's
   recent-preset label was made accurate, the camera initialization timeout
-  was added, and abandoned temporary exports were made cleanup-safe. Its
-  SHA-256 is
-  `E6DC5570F1ADB28DD4A3A14D7F469BDC9A737AFB67D7C15F2B632C3D27C80226`,
+  and stale-request protection were added, and abandoned temporary exports
+  were made cleanup-safe. Its SHA-256 is
+  `3433F9683BCF4ADAF7E1B5B6C9567F6850678F4EC384200C9F00A6566AAA3E7A`,
   and its Android APK Signature Scheme v2 signature verified successfully.
 
 갱신일: 2026-07-16
