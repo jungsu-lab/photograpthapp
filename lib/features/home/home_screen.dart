@@ -178,7 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 30),
-          const _SectionHeader(title: '최근 작업'),
+          const _SectionHeader(title: '최근 사용 프리셋'),
           const SizedBox(height: 12),
           _RecentPresetPanel(
             presets: _recentPresets,
