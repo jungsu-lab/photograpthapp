@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../data/composition/composition_catalog.dart';
 import '../../domain/models/composition_template.dart';
+import '../../services/composition_preferences.dart';
 import '../camera/camera_screen.dart';
 
 class ShootingLibraryScreen extends StatefulWidget {
-  const ShootingLibraryScreen({super.key});
+  const ShootingLibraryScreen({
+    super.key,
+    this.preferences = const CompositionPreferences(),
+  });
+
+  final CompositionPreferences preferences;
 
   @override
   State<ShootingLibraryScreen> createState() => _ShootingLibraryScreenState();
@@ -13,6 +19,38 @@ class ShootingLibraryScreen extends StatefulWidget {
 
 class _ShootingLibraryScreenState extends State<ShootingLibraryScreen> {
   CompositionCategory? _category;
+  Set<String> _favoriteIds = <String>{};
+  bool _showFavorites = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await widget.preferences.favorites();
+      if (mounted) setState(() => _favoriteIds = favorites);
+    } catch (_) {
+      if (mounted) _showFavoriteError();
+    }
+  }
+
+  Future<void> _toggleFavorite(String id) async {
+    try {
+      final favorites = await widget.preferences.toggleFavorite(id);
+      if (mounted) setState(() => _favoriteIds = favorites);
+    } catch (_) {
+      if (mounted) _showFavoriteError();
+    }
+  }
+
+  void _showFavoriteError() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('즐겨찾기를 저장하지 못했어요.')));
+  }
 
   void _openCamera([CompositionTemplate? template]) {
     Navigator.of(context).push(
@@ -100,7 +138,11 @@ class _ShootingLibraryScreenState extends State<ShootingLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final templates = compositionCatalog
-        .where((item) => _category == null || item.category == _category)
+        .where(
+          (item) =>
+              (_category == null || item.category == _category) &&
+              (!_showFavorites || _favoriteIds.contains(item.id)),
+        )
         .toList(growable: false);
     return Scaffold(
       backgroundColor: const Color(0xFFF9F8F5),
@@ -159,6 +201,31 @@ class _ShootingLibraryScreenState extends State<ShootingLibraryScreen> {
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
+                      FilterChip(
+                        key: const ValueKey('composition-favorites-filter'),
+                        avatar: Icon(
+                          _showFavorites
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          size: 18,
+                          color: _showFavorites
+                              ? Colors.white
+                              : const Color(0xFF262626),
+                        ),
+                        label: const Text('즐겨찾기'),
+                        selected: _showFavorites,
+                        selectedColor: const Color(0xFF111111),
+                        showCheckmark: false,
+                        labelStyle: TextStyle(
+                          color: _showFavorites
+                              ? Colors.white
+                              : const Color(0xFF262626),
+                          fontWeight: FontWeight.w700,
+                        ),
+                        onSelected: (selected) =>
+                            setState(() => _showFavorites = selected),
+                      ),
+                      const SizedBox(width: 8),
                       ChoiceChip(
                         label: const Text('전체'),
                         selected: _category == null,
@@ -183,20 +250,31 @@ class _ShootingLibraryScreenState extends State<ShootingLibraryScreen> {
             ),
           ),
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 26),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: .70,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-              ),
-              itemCount: templates.length,
-              itemBuilder: (context, index) => _CompositionCard(
-                template: templates[index],
-                onTap: () => _showTemplate(templates[index]),
-              ),
-            ),
+            child: templates.isEmpty
+                ? _EmptyCompositionState(
+                    favoritesOnly: _showFavorites,
+                    onShowAll: () => setState(() {
+                      _showFavorites = false;
+                      _category = null;
+                    }),
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 26),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: .70,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                        ),
+                    itemCount: templates.length,
+                    itemBuilder: (context, index) => _CompositionCard(
+                      template: templates[index],
+                      favorite: _favoriteIds.contains(templates[index].id),
+                      onFavorite: () => _toggleFavorite(templates[index].id),
+                      onTap: () => _showTemplate(templates[index]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -250,9 +328,16 @@ class _ShotPackCard extends StatelessWidget {
 }
 
 class _CompositionCard extends StatelessWidget {
-  const _CompositionCard({required this.template, required this.onTap});
+  const _CompositionCard({
+    required this.template,
+    required this.favorite,
+    required this.onFavorite,
+    required this.onTap,
+  });
 
   final CompositionTemplate template;
+  final bool favorite;
+  final VoidCallback onFavorite;
   final VoidCallback onTap;
 
   @override
@@ -300,6 +385,23 @@ class _CompositionCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: IconButton.filledTonal(
+                          key: ValueKey('composition-favorite-${template.id}'),
+                          onPressed: onFavorite,
+                          tooltip: favorite ? '즐겨찾기 해제' : '즐겨찾기',
+                          icon: Icon(
+                            favorite ? Icons.favorite : Icons.favorite_border,
+                            color: favorite
+                                ? const Color(0xFFC44444)
+                                : const Color(0xFF262626),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -324,6 +426,51 @@ class _CompositionCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    ),
+  );
+}
+
+class _EmptyCompositionState extends StatelessWidget {
+  const _EmptyCompositionState({
+    required this.favoritesOnly,
+    required this.onShowAll,
+  });
+
+  final bool favoritesOnly;
+  final VoidCallback onShowAll;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            favoritesOnly ? Icons.favorite_border : Icons.photo_camera_outlined,
+            size: 42,
+            color: const Color(0xFF777777),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            favoritesOnly ? '즐겨찾는 구도가 아직 없어요.' : '이 조건에 맞는 구도가 없어요.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            favoritesOnly
+                ? '카드의 하트를 눌러 자주 쓰는 구도를 모아보세요.'
+                : '다른 구도 분류를 선택해 보세요.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF686868)),
+          ),
+          if (favoritesOnly) ...[
+            const SizedBox(height: 16),
+            TextButton(onPressed: onShowAll, child: const Text('모든 구도 보기')),
+          ],
+        ],
       ),
     ),
   );
