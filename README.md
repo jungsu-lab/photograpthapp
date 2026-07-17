@@ -107,6 +107,8 @@ repository before Play Store or public distribution.
 Install `app-arm64-v8a-release.apk` on current Galaxy and most recent Android
 phones. The checked real-device flow and remaining checks are recorded in
 [docs/DEVICE_TEST_CHECKLIST.md](docs/DEVICE_TEST_CHECKLIST.md).
+The matching iPhone build and device checks are in
+[docs/IOS_TEST_CHECKLIST.md](docs/IOS_TEST_CHECKLIST.md).
 The distinction between implemented and directly verified MVP work is tracked
 in [docs/MVP_STATUS.md](docs/MVP_STATUS.md).
 
